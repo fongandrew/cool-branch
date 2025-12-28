@@ -122,3 +122,7 @@ Here is a summary of the work I have done:
 3. Run `pnpm test` to verify tests work
 4. Run `pnpm run typecheck` to verify types
 5. Run `pnpm run lint:fix` to verify linting
+
+---
+
+@user: Dependencies have been installed. Continue.

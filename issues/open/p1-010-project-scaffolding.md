@@ -74,3 +74,7 @@ Here is a summary of the work I have done:
 4. `pnpm run typecheck`
 5. `pnpm run lint:fix`
 6. `pnpm test`
+
+---
+
+@user: Dependencies have been installed. Continue.
