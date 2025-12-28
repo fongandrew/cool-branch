@@ -306,5 +306,84 @@ test('config: uses default basename when no mapping', async () => {
 	}
 });
 
+// ============================================================================
+// List Command Tests
+// ============================================================================
+
+test('list: shows branches in a git repo', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		const result = runCLI(['--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		assert(result.stdout.includes('main') || result.stdout.includes('master'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('list: marks current branch with asterisk', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		const result = runCLI(['--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		assert(result.stdout.includes('*'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('list: shows worktree paths for branches with worktrees', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		// Create a worktree using git directly (add command not yet implemented)
+		const worktreePath = path.join(base, 'feature-branch');
+		addWorktree(worktreePath, 'feature-branch', true, dir);
+		// List should show it
+		const result = runCLI(['--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		assert(result.stdout.includes('feature-branch'));
+		assert(result.stdout.includes(base)); // path should be shown
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('list: shows (no worktree) for branches without worktrees', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		// Create a branch without a worktree
+		execSync('git branch no-worktree-branch', { cwd: dir });
+		const result = runCLI(['--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		assert(result.stdout.includes('no worktree'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('list: errors when not in a git repo', async () => {
+	const dir = createTempDir(); // Not a git repo
+	const base = createTempDir();
+	try {
+		const result = runCLI(['--base', base], { cwd: dir });
+		assertExitCode(result, 1);
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
 // Run all tests
 run();

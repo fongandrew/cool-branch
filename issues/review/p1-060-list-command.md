@@ -132,3 +132,28 @@ Branches:
 6. `pnpm test` shows all tests passing
 7. `pnpm run typecheck` passes
 8. `pnpm run lint:fix` passes
+
+---
+
+@claude: I have implemented the default list command that shows branches and their worktree status.
+
+Here is a summary of the work I have done:
+
+- Added 5 TDD tests to `test/integration.ts` for the list command functionality
+- Created `src/commands/list.ts` with the `listCommand()` function that:
+  - Verifies we're in a git repository (exits with error if not)
+  - Gets all local branches, worktrees, and the current branch
+  - Displays branches sorted alphabetically with their worktree status
+  - Marks the current branch with `*`
+  - Shows `(main worktree)` for the main worktree
+  - Shows `(no worktree)` for branches without worktrees
+  - Replaces home directory paths with `~` for readability
+  - Uses consistent column alignment for output
+- Updated `src/index.ts` to use the new list command when no command is specified
+- Modified one test (`list: shows worktree paths for branches with worktrees`) to use git utilities directly since the `add` command is not yet implemented
+
+Verification:
+- All 5 new list command tests pass
+- `pnpm run lint:fix` passes
+- `pnpm run typecheck` passes
+- Note: 1 pre-existing test (`git utilities: addWorktree and removeWorktree work`) fails - this is unrelated to the list command and existed before this work

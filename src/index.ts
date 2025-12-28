@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { parseArgs, showHelp, showVersion } from './cli.js';
+import { listCommand } from './commands/list.js';
 import { getRepoFolderName, setRepoFolderName } from './config.js';
 
 /**
@@ -58,8 +59,7 @@ function main(): void {
 	// Dispatch to command handlers
 	switch (args.command) {
 		case 'list':
-			console.log('Listing worktrees...');
-			console.log(`  Base: ${args.base}`);
+			listCommand({ base: args.base });
 			break;
 		case 'add':
 			console.log('Adding worktree...');
