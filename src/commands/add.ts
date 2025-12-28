@@ -65,6 +65,30 @@ function runSetupScript(scriptPath: string, worktreePath: string): RunScriptResu
 }
 
 /**
+ * Find a setup script in the given directory
+ * Looks for files named "cool-branch" with or without extension (e.g., cool-branch, cool-branch.sh)
+ * @param dir Directory to search in
+ * @returns Path to the script if found, null otherwise
+ */
+function findSetupScript(dir: string): string | null {
+	try {
+		const entries = fs.readdirSync(dir);
+		for (const entry of entries) {
+			// Match cool-branch or cool-branch.* (with any extension)
+			if (
+				entry === 'cool-branch' ||
+				(entry.startsWith('cool-branch.') && entry !== 'cool-branch.')
+			) {
+				return path.join(dir, entry);
+			}
+		}
+	} catch {
+		// Directory doesn't exist or can't be read
+	}
+	return null;
+}
+
+/**
  * Recursively remove a directory and all its contents
  */
 function removeDirectoryRecursive(dirPath: string): void {
@@ -185,11 +209,8 @@ export function addCommand(options: AddOptions): void {
 			scriptPath = path.resolve(repoRoot, options.setup);
 			isExplicitScript = true;
 		} else {
-			// Look for default .cool-branch-setup in repo root
-			const defaultScript = path.join(repoRoot, '.cool-branch-setup');
-			if (fs.existsSync(defaultScript)) {
-				scriptPath = defaultScript;
-			}
+			// Look for cool-branch.* (any extension) in repo root
+			scriptPath = findSetupScript(repoRoot);
 		}
 
 		if (scriptPath) {
