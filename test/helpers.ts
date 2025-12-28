@@ -133,3 +133,65 @@ export function assertExitCode(result: { exitCode: number }, expected: number): 
 		throw new Error(`Expected exit code ${expected}, but got ${result.exitCode}`);
 	}
 }
+
+/**
+ * Context provided to test functions
+ */
+export interface TestContext {
+	/** Temp directory for the git repo */
+	dir: string;
+	/** Temp directory for the worktree base */
+	base: string;
+}
+
+// Test registry
+interface TestCase {
+	name: string;
+	fn: (ctx: TestContext) => Promise<void> | void;
+}
+
+const tests: TestCase[] = [];
+
+/**
+ * Register a test - all tests receive temp directories automatically
+ * @param name Test name
+ * @param fn Test function that receives { dir, base } context
+ */
+export function test(name: string, fn: (ctx: TestContext) => Promise<void> | void): void {
+	tests.push({ name, fn });
+}
+
+/**
+ * Run all registered tests
+ */
+export async function runTests(): Promise<void> {
+	let passed = 0;
+	let failed = 0;
+
+	for (const testCase of tests) {
+		process.stdout.write(`Running: ${testCase.name}... `);
+		const dir = createTempDir();
+		const base = createTempDir();
+		try {
+			await testCase.fn({ dir, base });
+			console.log('PASS');
+			passed++;
+		} catch (error) {
+			console.log('FAIL');
+			if (error instanceof Error) {
+				console.log(`  Error: ${error.message}`);
+			} else {
+				console.log(`  Error: ${String(error)}`);
+			}
+			failed++;
+		} finally {
+			cleanupTempDir(dir);
+			cleanupTempDir(base);
+		}
+	}
+
+	console.log();
+	console.log(`Results: ${passed} passed, ${failed} failed`);
+
+	process.exit(failed > 0 ? 1 : 0);
+}
