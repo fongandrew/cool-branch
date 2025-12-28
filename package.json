@@ -1,27 +1,39 @@
 {
   "name": "cool-branch",
   "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "description": "A cross-platform CLI tool for managing git worktrees",
+  "type": "module",
+  "bin": {
+    "cool-branch": "./dist/index.js"
   },
-  "keywords": [],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "tsx test/integration.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["git", "worktree", "cli"],
   "author": "",
   "license": "MIT",
   "packageManager": "pnpm@10.22.0",
   "devDependencies": {
     "@eslint/js": "^9.30.1",
-		"@types/node": "^24.0.10",
-		"@typescript-eslint/parser": "^8.47.0",
-		"eslint": "^9.30.1",
-		"eslint-config-prettier": "^10.1.5",
-		"eslint-plugin-import": "^2.32.0",
-		"eslint-plugin-prettier": "^5.5.1",
-		"eslint-plugin-simple-import-sort": "^12.1.1",
-		"eslint-plugin-unused-imports": "^4.1.4",
+    "@types/node": "^24.0.10",
+    "@typescript-eslint/parser": "^8.47.0",
+    "eslint": "^9.30.1",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.1",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-unused-imports": "^4.1.4",
     "prettier": "^3.6.2",
     "tsup": "^8.5.1",
+    "tsx": "^4.19.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.47.0"
   }
