@@ -1,6 +1,8 @@
 // Integration tests for cool-branch CLI
 
-import { runCLI } from './helpers.js';
+import assert from 'node:assert';
+
+import { assertExitCode, runCLI } from './helpers.js';
 
 // Test registry
 interface TestCase {
@@ -53,14 +55,29 @@ async function run(): Promise<void> {
 // Tests
 // ============================================================================
 
-test('CLI runs without error', () => {
+test('--help shows usage information', async () => {
 	const result = runCLI(['--help']);
-	// For now, just verify it doesn't crash
-	// This test will be updated once --help is implemented
-	// The CLI runs and returns some output (even if it's just the default message)
-	if (result.exitCode !== 0 && result.stderr) {
-		throw new Error(`CLI crashed with: ${result.stderr}`);
-	}
+	assertExitCode(result, 0);
+	assert(result.stdout.includes('cool-branch'));
+	assert(result.stdout.includes('add'));
+	assert(result.stdout.includes('rm'));
+});
+
+test('--version shows version', async () => {
+	const result = runCLI(['--version']);
+	assertExitCode(result, 0);
+	assert(/\d+\.\d+\.\d+/.test(result.stdout)); // semver pattern
+});
+
+test('-h is alias for --help', async () => {
+	const result = runCLI(['-h']);
+	assertExitCode(result, 0);
+	assert(result.stdout.includes('cool-branch'));
+});
+
+test('unknown command shows error', async () => {
+	const result = runCLI(['unknown-command']);
+	assertExitCode(result, 1);
 });
 
 // Run all tests

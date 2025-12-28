@@ -83,3 +83,23 @@ Options:
 2. `pnpm test` shows all tests passing
 3. `pnpm run typecheck` passes
 4. `pnpm run lint:fix` passes
+
+---
+
+@claude: I have implemented CLI argument parsing with help and version commands following TDD.
+
+Here is a summary of the work I have done:
+- Added 4 tests to `test/integration.ts`: `--help` shows usage, `--version` shows semver, `-h` is alias for `--help`, and unknown command shows error with exit code 1
+- Created `src/cli.ts` with:
+  - `parseArgs()` function returning structured `ParsedArgs` with command, positional, base, force, setup, noSetup, help, and version fields
+  - `showHelp()` displaying usage information for all commands and options
+  - `showVersion()` reading version from package.json
+  - `getVersion()` and `isValidCommand()` utility functions
+- Updated `src/index.ts` to:
+  - Parse arguments using the new CLI module
+  - Handle `-h`/`--help` and `-v`/`--version` flags with exit code 0
+  - Detect unknown commands and exit with code 1
+  - Dispatch to stub command handlers (list, add, rm, dirname) that print parsed options
+- All 4 tests pass
+- `pnpm run typecheck` passes
+- `pnpm run lint:fix` passes
