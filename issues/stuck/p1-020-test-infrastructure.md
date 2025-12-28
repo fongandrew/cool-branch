@@ -92,3 +92,33 @@ After this issue, each subsequent issue should:
 - Temp directories are created and cleaned up
 - `pnpm run typecheck` passes
 - `pnpm run lint:fix` passes
+
+---
+
+@claude: I have implemented the test infrastructure for TDD development.
+
+Here is a summary of the work I have done:
+- Created `test/helpers.ts` with all required test utilities:
+  - `createTempDir()` - creates unique temp directories
+  - `cleanupTempDir()` - recursively removes temp directories
+  - `initGitRepo()` - initializes git repos with initial commit and user config, supports bare repos
+  - `runCLI()` - runs the built CLI and captures stdout/stderr/exitCode
+  - `assertFileExists()` - throws if file doesn't exist
+  - `assertFileContains()` - throws if file doesn't contain expected string
+  - `assertExitCode()` - throws if exit code doesn't match expected
+- Rewrote `test/integration.ts` with proper test framework:
+  - `test(name, fn)` - registers tests
+  - `run()` - executes all registered tests with proper output format
+  - Exit code 0 on success, 1 on failure
+  - Output format matches specification: `Running: test name... PASS/FAIL`
+- Added initial smoke test that verifies CLI runs without crashing
+- `package.json` already had correct test script configured
+
+**BLOCKED:** Unable to run verification steps (`pnpm test`, `pnpm run typecheck`, `pnpm run lint:fix`) because network is unavailable and dependencies are not installed. Error: `ENOTFOUND registry.npmjs.org`. Per the FAQ in `faq/network-offline.md`, moving to stuck.
+
+**To complete verification when network is restored:**
+1. Run `pnpm install` to install dependencies
+2. Run `pnpm run build` to build the CLI
+3. Run `pnpm test` to verify tests work
+4. Run `pnpm run typecheck` to verify types
+5. Run `pnpm run lint:fix` to verify linting
