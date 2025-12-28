@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import { parseArgs, showHelp, showVersion } from './cli.js';
-import { addCommand, interactiveAddCommand } from './commands/add.js';
-import { dirnameCommand } from './commands/dirname.js';
-import { listCommand } from './commands/list.js';
-import { interactiveRemoveCommand, removeCommand } from './commands/remove.js';
+import { parseArgs, showHelp, showVersion } from './cli';
+import { addCommand, interactiveAddCommand } from './commands/add';
+import { dirnameCommand } from './commands/dirname';
+import { listCommand } from './commands/list';
+import { interactiveRemoveCommand, removeCommand } from './commands/remove';
 
 /**
  * Main entry point

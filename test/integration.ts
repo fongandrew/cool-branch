@@ -18,7 +18,7 @@ import {
 	listBranches,
 	listWorktrees,
 	removeWorktree,
-} from '../src/git.js';
+} from '../src/git';
 import {
 	assertExitCode,
 	assertFileExists,
@@ -26,7 +26,7 @@ import {
 	createTempDir,
 	initGitRepo,
 	runCLI,
-} from './helpers.js';
+} from './helpers';
 
 // Test registry
 interface TestCase {

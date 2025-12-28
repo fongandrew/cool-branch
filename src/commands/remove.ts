@@ -2,7 +2,7 @@
 
 import * as fs from 'node:fs';
 
-import { getWorktreeBasePath, getWorktreePath } from '../config.js';
+import { getWorktreeBasePath, getWorktreePath } from '../config';
 import {
 	deleteBranch,
 	getCurrentBranch,
@@ -10,8 +10,8 @@ import {
 	listBranches,
 	listWorktrees,
 	removeWorktree,
-} from '../git.js';
-import { isInteractive, promptConfirm, promptMultiSelect } from '../prompt.js';
+} from '../git';
+import { isInteractive, promptConfirm, promptMultiSelect } from '../prompt';
 
 /**
  * Options for the remove command

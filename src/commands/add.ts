@@ -4,7 +4,7 @@ import { execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { getWorktreeBasePath, getWorktreePath } from '../config.js';
+import { getWorktreeBasePath, getWorktreePath } from '../config';
 import {
 	addWorktree,
 	branchExists,
@@ -13,8 +13,8 @@ import {
 	listWorktrees,
 	removeWorktree,
 	runGit,
-} from '../git.js';
-import { isInteractive, promptConfirm, promptSelect, type SelectResult } from '../prompt.js';
+} from '../git';
+import { isInteractive, promptConfirm, promptSelect, type SelectResult } from '../prompt';
 
 /**
  * Options for the add command

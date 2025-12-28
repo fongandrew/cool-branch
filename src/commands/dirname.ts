@@ -2,8 +2,8 @@
 
 import * as path from 'node:path';
 
-import { getRepoFolderName, getRepoIdentifier, readConfig, setRepoFolderName } from '../config.js';
-import { getRepoRoot } from '../git.js';
+import { getRepoFolderName, getRepoIdentifier, readConfig, setRepoFolderName } from '../config';
+import { getRepoRoot } from '../git';
 
 /**
  * Options for the dirname command

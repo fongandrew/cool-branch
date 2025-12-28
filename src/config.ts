@@ -4,7 +4,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { getOriginUrl, getRepoRoot } from './git.js';
+import { getOriginUrl, getRepoRoot } from './git';
 
 /**
  * Get the path to the config file

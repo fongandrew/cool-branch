@@ -2,7 +2,7 @@
 
 import * as os from 'node:os';
 
-import { getCurrentBranch, getRepoRoot, listBranches, listWorktrees } from '../git.js';
+import { getCurrentBranch, getRepoRoot, listBranches, listWorktrees } from '../git';
 
 /**
  * Options for the list command
