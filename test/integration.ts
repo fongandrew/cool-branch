@@ -474,5 +474,86 @@ test('add: -f overwrites existing directory', async () => {
 	}
 });
 
+// ============================================================================
+// Remove Command Tests
+// ============================================================================
+
+test('rm: removes worktree directory', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		const repoName = path.basename(dir);
+		// Create a worktree
+		runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+		assertFileExists(path.join(base, repoName, 'feature-x'));
+		// Remove it
+		const result = runCLI(['rm', 'feature-x', '--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		// Directory should be gone
+		assert(!fs.existsSync(path.join(base, repoName, 'feature-x')));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('rm: deletes the branch', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		// Create a worktree
+		runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+		// Verify branch exists
+		let branches = execSync('git branch', { cwd: dir }).toString();
+		assert(branches.includes('feature-x'));
+		// Remove it
+		runCLI(['rm', 'feature-x', '--base', base], { cwd: dir });
+		// Branch should be gone
+		branches = execSync('git branch', { cwd: dir }).toString();
+		assert(!branches.includes('feature-x'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('rm: -f removes even with uncommitted changes', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		const repoName = path.basename(dir);
+		// Create a worktree
+		runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+		// Make uncommitted changes in the worktree
+		const worktreePath = path.join(base, repoName, 'feature-x');
+		fs.writeFileSync(path.join(worktreePath, 'uncommitted.txt'), 'changes');
+		// Try to remove without -f (should fail)
+		const resultNoForce = runCLI(['rm', 'feature-x', '--base', base], { cwd: dir });
+		assertExitCode(resultNoForce, 1);
+		// With -f should succeed
+		const resultForce = runCLI(['rm', 'feature-x', '-f', '--base', base], { cwd: dir });
+		assertExitCode(resultForce, 0);
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('rm: errors when worktree does not exist', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		const result = runCLI(['rm', 'nonexistent-branch', '--base', base], { cwd: dir });
+		assertExitCode(result, 1);
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
 // Run all tests
 run();

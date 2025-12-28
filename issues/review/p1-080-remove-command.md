@@ -147,3 +147,21 @@ interface RemoveOptions {
 6. `pnpm test` shows all tests passing
 7. `pnpm run typecheck` passes
 8. `pnpm run lint:fix` passes
+
+---
+
+@claude: I have implemented the `rm` command for removing worktrees.
+
+Here is a summary of the work I have done:
+- Added 4 TDD tests to `test/integration.ts` covering: removing worktree directory, deleting branch, force removal with uncommitted changes, and error on non-existent worktree
+- Ran tests to confirm they failed before implementation
+- Created `src/commands/remove.ts` with `removeCommand(options: RemoveOptions)` function that:
+  - Validates we're in a git repository
+  - Verifies the worktree exists at `<base>/<repo-name>/<branch-name>`
+  - Runs `git worktree remove <path>` (with `--force` if `-f` flag provided)
+  - Deletes the branch with `git branch -D <branch-name>`
+  - Provides helpful error messages for uncommitted changes without `-f`
+- Updated `src/index.ts` to route the `rm` command to the remove command handler
+- All 32 tests pass including the 4 new tests
+- `pnpm run lint:fix` passes
+- `pnpm run typecheck` passes

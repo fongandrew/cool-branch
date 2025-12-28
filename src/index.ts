@@ -3,6 +3,7 @@
 import { parseArgs, showHelp, showVersion } from './cli.js';
 import { addCommand } from './commands/add.js';
 import { listCommand } from './commands/list.js';
+import { removeCommand } from './commands/remove.js';
 import { getRepoFolderName, setRepoFolderName } from './config.js';
 
 /**
@@ -78,9 +79,17 @@ function main(): void {
 			});
 			break;
 		case 'rm':
-			console.log('Removing worktree...');
-			console.log(`  Branch: ${args.positional ?? '(will prompt)'}`);
-			console.log(`  Force: ${args.force}`);
+			if (!args.positional) {
+				// Interactive mode not yet implemented
+				console.error('Error: Branch name is required');
+				console.error('Usage: cool-branch rm <branch-name>');
+				process.exit(1);
+			}
+			removeCommand({
+				base: args.base,
+				branchName: args.positional,
+				force: args.force,
+			});
 			break;
 		case 'dirname':
 			if (args.positional) {
