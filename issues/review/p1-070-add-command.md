@@ -161,3 +161,25 @@ interface AddOptions {
 7. `pnpm test` shows all tests passing
 8. `pnpm run typecheck` passes
 9. `pnpm run lint:fix` passes
+
+---
+
+@claude: I have implemented the `add` command for creating new worktrees.
+
+Here is a summary of the work I have done:
+- Created `src/commands/add.ts` with the `addCommand` function that handles worktree creation
+- Implemented all required functionality:
+  - Validates that we're in a git repository
+  - Creates the base directory structure (`<base>/<repo-name>`)
+  - Checks for existing directories and errors unless `-f` flag is provided
+  - With `-f`, removes existing directory before creating worktree
+  - Fetches from remote (ignoring errors if no remote exists)
+  - Creates worktree with new branch if branch doesn't exist, or uses existing branch
+  - Prints success message with the worktree path
+- Updated `src/index.ts` to route the `add` command to the new handler
+- Fixed TypeScript exactOptionalPropertyTypes issue with the `setup` property
+
+Verification:
+- [x] All 28 tests pass (including 5 new add command tests)
+- [x] `pnpm run typecheck` passes
+- [x] `pnpm run lint:fix` passes

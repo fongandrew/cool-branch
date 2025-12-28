@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { parseArgs, showHelp, showVersion } from './cli.js';
+import { addCommand } from './commands/add.js';
 import { listCommand } from './commands/list.js';
 import { getRepoFolderName, setRepoFolderName } from './config.js';
 
@@ -62,12 +63,19 @@ function main(): void {
 			listCommand({ base: args.base });
 			break;
 		case 'add':
-			console.log('Adding worktree...');
-			console.log(`  Branch: ${args.positional ?? '(will prompt)'}`);
-			console.log(`  Base: ${args.base}`);
-			console.log(`  Force: ${args.force}`);
-			console.log(`  Setup: ${args.setup ?? 'default'}`);
-			console.log(`  No Setup: ${args.noSetup}`);
+			if (!args.positional) {
+				// Interactive mode not yet implemented
+				console.error('Error: Branch name is required');
+				console.error('Usage: cool-branch add <branch-name>');
+				process.exit(1);
+			}
+			addCommand({
+				base: args.base,
+				branchName: args.positional,
+				force: args.force,
+				setup: args.setup,
+				noSetup: args.noSetup,
+			});
 			break;
 		case 'rm':
 			console.log('Removing worktree...');
