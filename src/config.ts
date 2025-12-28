@@ -80,7 +80,7 @@ export function getRepoIdentifier(cwd?: string): string {
 
 /**
  * Get the folder name for the current repository
- * Looks up the mapping in config, or returns the basename of repo root
+ * Looks up the mapping in config, or derives from repo basename and saves it
  * @param base Base directory for worktrees
  * @param cwd Working directory (optional)
  * @returns Folder name to use for this repo's worktrees
@@ -94,13 +94,17 @@ export function getRepoFolderName(base: string, cwd?: string): string {
 		return config[repoId] as string;
 	}
 
-	// Otherwise, derive from repo root basename
+	// Otherwise, derive from repo root basename and save it
 	const repoRoot = getRepoRoot(cwd);
 	if (!repoRoot) {
 		throw new Error('Not in a git repository');
 	}
 
-	return path.basename(repoRoot);
+	const folderName = path.basename(repoRoot);
+	config[repoId] = folderName;
+	writeConfig(base, config);
+
+	return folderName;
 }
 
 /**

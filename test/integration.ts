@@ -410,6 +410,27 @@ test('add: warns if --setup script does not exist', ({ dir, base }) => {
 });
 
 // ============================================================================
+// Auto-populate Config Tests
+// ============================================================================
+
+test('list: auto-populates cool-branch.json with repo mapping', ({ dir, base }) => {
+	initGitRepo(dir);
+	// Config file should not exist yet
+	assert(!fs.existsSync(path.join(base, 'cool-branch.json')));
+	// Run list command
+	runCLI(['--base', base], { cwd: dir });
+	// Config file should now exist with the mapping
+	assertFileExists(path.join(base, 'cool-branch.json'));
+	const config = JSON.parse(fs.readFileSync(path.join(base, 'cool-branch.json'), 'utf-8'));
+	// Should have a mapping for this repo (using repo path as key since no origin)
+	assert(Object.keys(config).length > 0, 'Config should have at least one mapping');
+	assert(
+		Object.values(config).includes(path.basename(dir)),
+		'Config should map to repo basename',
+	);
+});
+
+// ============================================================================
 // Interactive Mode Tests
 // ============================================================================
 

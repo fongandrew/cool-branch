@@ -2,6 +2,7 @@
 
 import * as os from 'node:os';
 
+import { getRepoFolderName } from '../config';
 import { getCurrentBranch, getRepoRoot, listBranches, listWorktrees } from '../git';
 
 /**
@@ -26,13 +27,16 @@ function shortenPath(fullPath: string): string {
  * List all branches and their worktree status
  * @param options Command options
  */
-export function listCommand(_options: ListOptions): void {
+export function listCommand(options: ListOptions): void {
 	// Verify we're in a git repo
 	const repoRoot = getRepoRoot();
 	if (repoRoot === null) {
 		console.error('Error: Not in a git repository');
 		process.exit(1);
 	}
+
+	// Ensure config is populated with repo mapping
+	getRepoFolderName(options.base);
 
 	// Get all branches
 	const branches = listBranches();
