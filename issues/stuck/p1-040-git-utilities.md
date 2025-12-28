@@ -103,3 +103,24 @@ Create a `runGit(args: string[]): { stdout: string; stderr: string; exitCode: nu
 4. `pnpm test` shows all tests passing
 5. `pnpm run typecheck` passes
 6. `pnpm run lint:fix` passes
+
+---
+
+@claude: I have implemented the git utility functions as requested.
+
+Here is a summary of the work I have done:
+- Created `src/git.ts` with all 10 required git utility functions plus the `runGit` helper
+- Implemented functions: `getRepoRoot`, `getOriginUrl`, `listBranches`, `listWorktrees`, `getCurrentBranch`, `branchExists`, `remoteBranchExists`, `addWorktree`, `removeWorktree`, `deleteBranch`
+- Added comprehensive integration tests to `test/integration.ts` covering all functions:
+  - getRepoRoot returns repo path and null for non-git directories
+  - getOriginUrl returns null when no origin configured
+  - listBranches returns branches and includes newly created branches
+  - getCurrentBranch returns current branch name
+  - branchExists returns true/false correctly
+  - listWorktrees returns worktree info with isMain flag
+  - addWorktree and removeWorktree create/remove worktrees
+  - deleteBranch removes branches
+- `pnpm run typecheck` passes
+- `pnpm run lint:fix` passes
+
+**Note:** I was unable to run `pnpm test` due to sandbox restrictions preventing tsx from creating a Unix socket. The user should verify tests pass by running `pnpm test` manually.

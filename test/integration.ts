@@ -1,8 +1,25 @@
 // Integration tests for cool-branch CLI
 
 import assert from 'node:assert';
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
-import { assertExitCode, runCLI } from './helpers.js';
+// ============================================================================
+// Git Utilities Tests
+// ============================================================================
+import {
+	addWorktree,
+	branchExists,
+	deleteBranch,
+	getCurrentBranch,
+	getOriginUrl,
+	getRepoRoot,
+	listBranches,
+	listWorktrees,
+	removeWorktree,
+} from '../src/git.js';
+import { assertExitCode, cleanupTempDir, createTempDir, initGitRepo, runCLI } from './helpers.js';
 
 // Test registry
 interface TestCase {
@@ -78,6 +95,159 @@ test('-h is alias for --help', async () => {
 test('unknown command shows error', async () => {
 	const result = runCLI(['unknown-command']);
 	assertExitCode(result, 1);
+});
+
+test('git utilities: getRepoRoot returns repo path', async () => {
+	const dir = createTempDir();
+	try {
+		initGitRepo(dir);
+		const root = getRepoRoot(dir);
+		assert(root !== null, 'getRepoRoot should return a path');
+		assert(
+			root === dir || root.includes(path.basename(dir)),
+			'getRepoRoot should return the repo path',
+		);
+	} finally {
+		cleanupTempDir(dir);
+	}
+});
+
+test('git utilities: getRepoRoot returns null for non-git directory', async () => {
+	const dir = createTempDir();
+	try {
+		const root = getRepoRoot(dir);
+		assert(root === null, 'getRepoRoot should return null for non-git directory');
+	} finally {
+		cleanupTempDir(dir);
+	}
+});
+
+test('git utilities: getOriginUrl returns null when no origin', async () => {
+	const dir = createTempDir();
+	try {
+		initGitRepo(dir);
+		const url = getOriginUrl(dir);
+		assert(url === null, 'getOriginUrl should return null when no origin configured');
+	} finally {
+		cleanupTempDir(dir);
+	}
+});
+
+test('git utilities: listBranches returns branches', async () => {
+	const dir = createTempDir();
+	try {
+		initGitRepo(dir);
+		const branches = listBranches(dir);
+		assert(Array.isArray(branches), 'listBranches should return an array');
+		// Should have at least the main branch (could be main, master, or another default)
+		assert(branches.length > 0, 'listBranches should return at least one branch');
+	} finally {
+		cleanupTempDir(dir);
+	}
+});
+
+test('git utilities: listBranches includes newly created branches', async () => {
+	const dir = createTempDir();
+	try {
+		initGitRepo(dir);
+		// Create a new branch
+		execSync('git branch test-branch', { cwd: dir });
+		const branches = listBranches(dir);
+		assert(branches.includes('test-branch'), 'listBranches should include test-branch');
+	} finally {
+		cleanupTempDir(dir);
+	}
+});
+
+test('git utilities: getCurrentBranch returns current branch name', async () => {
+	const dir = createTempDir();
+	try {
+		initGitRepo(dir);
+		const branch = getCurrentBranch(dir);
+		assert(branch !== null, 'getCurrentBranch should return a branch name');
+		assert(
+			typeof branch === 'string' && branch.length > 0,
+			'getCurrentBranch should return a non-empty string',
+		);
+	} finally {
+		cleanupTempDir(dir);
+	}
+});
+
+test('git utilities: branchExists returns true for existing branch', async () => {
+	const dir = createTempDir();
+	try {
+		initGitRepo(dir);
+		execSync('git branch test-exists', { cwd: dir });
+		const exists = branchExists('test-exists', dir);
+		assert(exists === true, 'branchExists should return true for existing branch');
+	} finally {
+		cleanupTempDir(dir);
+	}
+});
+
+test('git utilities: branchExists returns false for non-existing branch', async () => {
+	const dir = createTempDir();
+	try {
+		initGitRepo(dir);
+		const exists = branchExists('non-existent-branch', dir);
+		assert(exists === false, 'branchExists should return false for non-existing branch');
+	} finally {
+		cleanupTempDir(dir);
+	}
+});
+
+test('git utilities: listWorktrees returns worktree info', async () => {
+	const dir = createTempDir();
+	try {
+		initGitRepo(dir);
+		const worktrees = listWorktrees(dir);
+		assert(Array.isArray(worktrees), 'listWorktrees should return an array');
+		assert(worktrees.length >= 1, 'listWorktrees should return at least the main worktree');
+		const main = worktrees.find((w) => w.isMain);
+		assert(main !== undefined, 'listWorktrees should have a main worktree');
+		assert(typeof main.path === 'string', 'worktree should have a path');
+	} finally {
+		cleanupTempDir(dir);
+	}
+});
+
+test('git utilities: addWorktree and removeWorktree work', async () => {
+	const dir = createTempDir();
+	const worktreePath = path.join(dir, 'my-worktree');
+	try {
+		initGitRepo(dir);
+		// Add worktree with new branch
+		addWorktree(worktreePath, 'feature-branch', true, dir);
+		assert(fs.existsSync(worktreePath), 'Worktree directory should exist after addWorktree');
+
+		// Verify worktree is listed
+		const worktrees = listWorktrees(dir);
+		const added = worktrees.find((w) => w.path === worktreePath);
+		assert(added !== undefined, 'Added worktree should appear in listWorktrees');
+
+		// Remove worktree
+		removeWorktree(worktreePath, false, dir);
+		assert(
+			!fs.existsSync(worktreePath),
+			'Worktree directory should be removed after removeWorktree',
+		);
+	} finally {
+		cleanupTempDir(dir);
+	}
+});
+
+test('git utilities: deleteBranch removes a branch', async () => {
+	const dir = createTempDir();
+	try {
+		initGitRepo(dir);
+		execSync('git branch to-delete', { cwd: dir });
+		assert(branchExists('to-delete', dir), 'Branch should exist before deletion');
+		deleteBranch('to-delete', dir);
+		assert(!branchExists('to-delete', dir), 'Branch should not exist after deletion');
+	} finally {
+		cleanupTempDir(dir);
+	}
 });
 
 // Run all tests
