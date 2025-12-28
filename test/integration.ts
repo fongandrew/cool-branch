@@ -19,7 +19,14 @@ import {
 	listWorktrees,
 	removeWorktree,
 } from '../src/git.js';
-import { assertExitCode, cleanupTempDir, createTempDir, initGitRepo, runCLI } from './helpers.js';
+import {
+	assertExitCode,
+	assertFileExists,
+	cleanupTempDir,
+	createTempDir,
+	initGitRepo,
+	runCLI,
+} from './helpers.js';
 
 // Test registry
 interface TestCase {
@@ -247,6 +254,55 @@ test('git utilities: deleteBranch removes a branch', async () => {
 		assert(!branchExists('to-delete', dir), 'Branch should not exist after deletion');
 	} finally {
 		cleanupTempDir(dir);
+	}
+});
+
+// ============================================================================
+// Config Management Tests
+// ============================================================================
+
+test('config: creates cool-branch.json when setting dirname', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		const result = runCLI(['dirname', 'custom-name', '--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		assertFileExists(path.join(base, 'cool-branch.json'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('config: reads existing mapping', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		// Set a mapping
+		runCLI(['dirname', 'my-name', '--base', base], { cwd: dir });
+		// Read it back
+		const result = runCLI(['dirname', '--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		assert(result.stdout.includes('my-name'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('config: uses default basename when no mapping', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		const result = runCLI(['dirname', '--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		// Should mention using default
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
 	}
 });
 

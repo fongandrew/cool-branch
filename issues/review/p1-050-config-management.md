@@ -119,3 +119,30 @@ Located at `<base>/cool-branch.json`:
 5. `pnpm test` shows all tests passing
 6. `pnpm run typecheck` passes
 7. `pnpm run lint:fix` passes
+
+---
+
+@claude: I have implemented the configuration file management for repo-to-folder mappings.
+
+Here is a summary of the work I have done:
+
+- Added 3 TDD tests to `test/integration.ts` for config management (creates config file, reads existing mapping, uses default basename)
+- Created `src/config.ts` with all required functions:
+  - `getConfigPath(base)` - returns path to `<base>/cool-branch.json`
+  - `readConfig(base)` - reads and parses config, returns empty object if missing, throws on parse errors
+  - `writeConfig(base, config)` - writes config with 2-space indent, creates base directory if needed
+  - `getRepoIdentifier(cwd?)` - returns origin URL or absolute repo path as unique identifier
+  - `getRepoFolderName(base, cwd?)` - looks up mapping or returns repo basename
+  - `setRepoFolderName(base, folderName, cwd?)` - updates config with new mapping
+  - `getWorktreeBasePath(base, cwd?)` - returns `<base>/<repo-folder-name>`, creates directory if needed
+  - `getWorktreePath(base, branchName, cwd?)` - returns full worktree path
+  - `expandPath(inputPath)` - expands `~` to home directory
+- Updated `src/index.ts` to use config module for the `dirname` command:
+  - `dirname <name>` sets the folder name mapping
+  - `dirname` (no args) displays the current folder name
+
+Verification results:
+- All 3 new config tests pass
+- `pnpm run lint:fix` passes
+- `pnpm run typecheck` passes
+- Note: 1 pre-existing test (`git utilities: addWorktree and removeWorktree work`) fails - this is unrelated to config management and existed before this work

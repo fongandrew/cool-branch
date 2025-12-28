@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { parseArgs, showHelp, showVersion } from './cli.js';
+import { getRepoFolderName, setRepoFolderName } from './config.js';
 
 /**
  * Main entry point
@@ -74,8 +75,15 @@ function main(): void {
 			console.log(`  Force: ${args.force}`);
 			break;
 		case 'dirname':
-			console.log('Getting dirname...');
-			console.log(`  Folder: ${args.positional ?? '(will prompt)'}`);
+			if (args.positional) {
+				// Set the folder name mapping
+				setRepoFolderName(args.base, args.positional);
+				console.log(`Set folder name to: ${args.positional}`);
+			} else {
+				// Get the current folder name
+				const folderName = getRepoFolderName(args.base);
+				console.log(folderName);
+			}
 			break;
 	}
 }
