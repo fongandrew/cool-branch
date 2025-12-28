@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm run dev:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm run test:*)"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "excludedCommands": ["pnpm run dev:*", "pnpm test:*"]
+  }
+}

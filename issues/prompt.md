@@ -51,11 +51,16 @@ Issue files may be long. Use CLI commands to read:
 - To expand: `npx bueller-wheel issue [ISSUE_FILE_PATH] --index <start>,<end>`
 
 1. **Read the issue**: Parse the conversation history in [ISSUE_FILE_PATH] to understand the task
-2. **Work on the task**: Do what the issue requests. When encountering issues, always check for a relevant guide in [FAQ_DIR]/ first.
-3. **Verify**: Verify the following pass:
+2. **Write tests first (TDD)**: If the issue has a "TDD Approach" section:
+   - Copy the test code into `test/integration.ts`
+   - Run `pnpm test` to confirm the new tests fail (this is expected!)
+   - Only then proceed to implementation
+3. **Work on the task**: Do what the issue requests. When encountering issues, always check for a relevant guide in [FAQ_DIR]/ first.
+4. **Verify**: Verify the following pass:
+   - [ ] `pnpm test` (all tests pass, including new ones)
    - [ ] `pnpm run lint:fix`
    - [ ] `pnpm run typecheck`
-4. **Append your response**: Add your summary to [ISSUE_FILE_PATH] using this format:
+5. **Append your response**: Add your summary to [ISSUE_FILE_PATH] using this format:
    ```
    ---
 
@@ -67,7 +72,7 @@ Issue files may be long. Use CLI commands to read:
    - Item 3
    ```
 
-5. **Decide the outcome**: Choose ONE of the following actions:
+6. **Decide the outcome**: Choose ONE of the following actions:
 
    a. **CONTINUE** - You made progress but the task isn't complete yet
       - Leave the issue in `[ISSUES_DIR]/[ISSUE_DIR_OPEN]/` for the next iteration
