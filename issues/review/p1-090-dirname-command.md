@@ -127,3 +127,30 @@ interface DirnameOptions {
 5. `pnpm test` shows all tests passing
 6. `pnpm run typecheck` passes
 7. `pnpm run lint:fix` passes
+
+---
+
+@claude: I have implemented the `dirname` command for managing repository folder name mappings.
+
+Here is a summary of the work I have done:
+- Created `src/commands/dirname.ts` with `dirnameCommand()` function implementing:
+  - Read mode: Shows current folder name mapping or default basename
+  - Write mode: Sets custom folder name mapping in `cool-branch.json`
+  - Folder name validation (rejects path separators, special chars, control chars, Windows reserved names)
+  - Warning when changing an existing mapping
+- Updated `src/index.ts` to route the `dirname` command to the new command handler
+- Added 4 new tests from the TDD approach to `test/integration.ts`:
+  - `dirname: returns default basename when no mapping`
+  - `dirname: stores custom mapping`
+  - `dirname: retrieves stored mapping`
+  - `dirname: add command uses custom dirname`
+
+Verification:
+- [x] All 36 tests pass (`pnpm test`)
+- [x] `pnpm run lint:fix` passes
+- [x] `pnpm run typecheck` passes
+
+Output examples:
+- Read mode (no mapping): `No custom mapping. Using default: <basename>` + `Worktrees at: <base>/<basename>/`
+- Write mode: `Folder name set to: <folder-name>` + `Worktrees will be created at: <base>/<folder-name>/`
+- Read mode (with mapping): `Folder name: <folder-name>` + `Worktrees at: <base>/<folder-name>/`

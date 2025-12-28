@@ -307,6 +307,75 @@ test('config: uses default basename when no mapping', async () => {
 });
 
 // ============================================================================
+// Dirname Command Tests (from TDD issue)
+// ============================================================================
+
+test('dirname: returns default basename when no mapping', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		const result = runCLI(['dirname', '--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		assert(result.stdout.includes('default') || result.stdout.includes(path.basename(dir)));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('dirname: stores custom mapping', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		const result = runCLI(['dirname', 'my-custom-name', '--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		assert(result.stdout.includes('my-custom-name'));
+		// Verify it's in the config file
+		const config = JSON.parse(fs.readFileSync(path.join(base, 'cool-branch.json'), 'utf-8'));
+		assert(Object.values(config).includes('my-custom-name'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('dirname: retrieves stored mapping', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		// Set mapping
+		runCLI(['dirname', 'stored-name', '--base', base], { cwd: dir });
+		// Retrieve it
+		const result = runCLI(['dirname', '--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		assert(result.stdout.includes('stored-name'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('dirname: add command uses custom dirname', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		// Set custom dirname
+		runCLI(['dirname', 'custom-folder', '--base', base], { cwd: dir });
+		// Create a worktree
+		runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+		// Verify it used the custom folder name
+		assertFileExists(path.join(base, 'custom-folder', 'feature-x'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+// ============================================================================
 // List Command Tests
 // ============================================================================
 

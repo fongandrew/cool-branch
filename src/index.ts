@@ -2,9 +2,9 @@
 
 import { parseArgs, showHelp, showVersion } from './cli.js';
 import { addCommand } from './commands/add.js';
+import { dirnameCommand } from './commands/dirname.js';
 import { listCommand } from './commands/list.js';
 import { removeCommand } from './commands/remove.js';
-import { getRepoFolderName, setRepoFolderName } from './config.js';
 
 /**
  * Main entry point
@@ -92,15 +92,10 @@ function main(): void {
 			});
 			break;
 		case 'dirname':
-			if (args.positional) {
-				// Set the folder name mapping
-				setRepoFolderName(args.base, args.positional);
-				console.log(`Set folder name to: ${args.positional}`);
-			} else {
-				// Get the current folder name
-				const folderName = getRepoFolderName(args.base);
-				console.log(folderName);
-			}
+			dirnameCommand({
+				base: args.base,
+				folderName: args.positional,
+			});
 			break;
 	}
 }
