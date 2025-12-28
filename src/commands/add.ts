@@ -4,7 +4,15 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { getWorktreeBasePath, getWorktreePath } from '../config.js';
-import { addWorktree, branchExists, getRepoRoot, runGit } from '../git.js';
+import {
+	addWorktree,
+	branchExists,
+	getRepoRoot,
+	listBranches,
+	listWorktrees,
+	runGit,
+} from '../git.js';
+import { isInteractive, promptConfirm, promptSelect, type SelectResult } from '../prompt.js';
 
 /**
  * Options for the add command
@@ -117,4 +125,104 @@ export function addCommand(options: AddOptions): void {
 	}
 
 	console.log(`Worktree created at: ${targetPath}`);
+}
+
+/**
+ * Options for interactive add
+ */
+export interface InteractiveAddOptions {
+	base: string;
+	setup: string | undefined;
+	noSetup: boolean;
+}
+
+/**
+ * Interactive add - prompt user to select or enter a branch name
+ * @param options Command options
+ */
+export async function interactiveAddCommand(options: InteractiveAddOptions): Promise<void> {
+	// Validate context - ensure we're in a git repository
+	const repoRoot = getRepoRoot();
+	if (repoRoot === null) {
+		console.error('Error: Not in a git repository');
+		process.exit(1);
+	}
+
+	// Ensure we're in an interactive terminal
+	if (!isInteractive()) {
+		console.error('Error: Branch name is required in non-interactive mode');
+		console.error('Usage: cool-branch add <branch-name>');
+		process.exit(1);
+	}
+
+	// Get all branches and worktrees
+	const branches = listBranches();
+	const worktrees = listWorktrees();
+
+	// Build display list with worktree indicators
+	const worktreeBranches = new Set(worktrees.map((w) => w.branch));
+	const displayOptions = branches.map((branch) => {
+		if (worktreeBranches.has(branch)) {
+			return `${branch} [worktree]`;
+		}
+		return branch;
+	});
+
+	// Prompt for selection
+	const result: SelectResult = await promptSelect(
+		'Select existing branch or enter new name:',
+		displayOptions,
+	);
+
+	let branchName: string;
+	let force = false;
+
+	if (result.type === 'index') {
+		// User selected an existing branch by number
+		branchName = branches[result.value] as string;
+
+		// Check if it already has a worktree
+		if (worktreeBranches.has(branchName)) {
+			const worktreePath = getWorktreePath(options.base, branchName);
+			const confirmed = await promptConfirm(
+				`Worktree exists at ${worktreePath}. Overwrite?`,
+				true,
+			);
+			if (!confirmed) {
+				console.log('Aborted.');
+				process.exit(0);
+			}
+			force = true;
+		}
+	} else {
+		// User entered text - use as new branch name
+		branchName = result.value;
+		if (!branchName) {
+			console.error('Error: Branch name cannot be empty');
+			process.exit(1);
+		}
+
+		// Check if this branch already has a worktree
+		if (worktreeBranches.has(branchName)) {
+			const worktreePath = getWorktreePath(options.base, branchName);
+			const confirmed = await promptConfirm(
+				`Worktree exists at ${worktreePath}. Overwrite?`,
+				true,
+			);
+			if (!confirmed) {
+				console.log('Aborted.');
+				process.exit(0);
+			}
+			force = true;
+		}
+	}
+
+	// Proceed with add command
+	addCommand({
+		base: options.base,
+		branchName,
+		force,
+		setup: options.setup,
+		noSetup: options.noSetup,
+	});
 }

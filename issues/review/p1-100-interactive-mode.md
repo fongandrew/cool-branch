@@ -123,3 +123,28 @@ Utility functions for interactive prompts:
 3. `pnpm test` shows all tests passing
 4. `pnpm run typecheck` passes
 5. `pnpm run lint:fix` passes
+
+---
+
+@claude: I have implemented interactive mode for the `add` and `rm` commands when no branch name is provided.
+
+Here is a summary of the work I have done:
+- Created `src/prompt.ts` with interactive prompt utilities:
+  - `promptLine(message)` - Read a line of input
+  - `promptConfirm(message, defaultNo)` - Yes/no confirmation with configurable default
+  - `promptSelect(message, options)` - Display numbered options and return index or raw text
+  - `promptMultiSelect(message, options)` - Multi-selection with space/comma-separated numbers
+  - `parseMultiSelect(input, maxIndex)` - Parse multi-selection input
+  - `isInteractive()` - Check if stdin is a TTY
+- Updated `src/commands/add.ts`:
+  - Added `interactiveAddCommand()` that lists branches with worktree indicators, prompts for selection, and handles existing worktree confirmation
+- Updated `src/commands/remove.ts`:
+  - Added `interactiveRemoveCommand()` that lists managed worktrees, supports multi-selection, and offers force-remove on failure
+- Updated `src/index.ts`:
+  - Made `main()` async
+  - Calls interactive commands when no positional argument (branch name) is provided
+- Added TDD tests to `test/integration.ts` to verify non-interactive mode still works
+- All verification passed:
+  - `pnpm test`: 38 passed, 0 failed
+  - `pnpm run lint:fix`: passed
+  - `pnpm run typecheck`: passed

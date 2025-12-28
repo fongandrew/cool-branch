@@ -624,5 +624,37 @@ test('rm: errors when worktree does not exist', async () => {
 	}
 });
 
+// ============================================================================
+// Interactive Mode Tests
+// ============================================================================
+
+// Ensure non-interactive mode still works after adding interactive support
+test('add: still works with branch name after interactive support added', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		const result = runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('rm: still works with branch name after interactive support added', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+		const result = runCLI(['rm', 'feature-x', '--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
 // Run all tests
 run();

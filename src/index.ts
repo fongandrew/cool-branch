@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 
 import { parseArgs, showHelp, showVersion } from './cli.js';
-import { addCommand } from './commands/add.js';
+import { addCommand, interactiveAddCommand } from './commands/add.js';
 import { dirnameCommand } from './commands/dirname.js';
 import { listCommand } from './commands/list.js';
-import { removeCommand } from './commands/remove.js';
+import { interactiveRemoveCommand, removeCommand } from './commands/remove.js';
 
 /**
  * Main entry point
  */
-function main(): void {
+async function main(): Promise<void> {
 	const args = parseArgs(process.argv.slice(2));
 
 	// Handle help flag
@@ -65,31 +65,35 @@ function main(): void {
 			break;
 		case 'add':
 			if (!args.positional) {
-				// Interactive mode not yet implemented
-				console.error('Error: Branch name is required');
-				console.error('Usage: cool-branch add <branch-name>');
-				process.exit(1);
+				// Interactive mode
+				await interactiveAddCommand({
+					base: args.base,
+					setup: args.setup,
+					noSetup: args.noSetup,
+				});
+			} else {
+				addCommand({
+					base: args.base,
+					branchName: args.positional,
+					force: args.force,
+					setup: args.setup,
+					noSetup: args.noSetup,
+				});
 			}
-			addCommand({
-				base: args.base,
-				branchName: args.positional,
-				force: args.force,
-				setup: args.setup,
-				noSetup: args.noSetup,
-			});
 			break;
 		case 'rm':
 			if (!args.positional) {
-				// Interactive mode not yet implemented
-				console.error('Error: Branch name is required');
-				console.error('Usage: cool-branch rm <branch-name>');
-				process.exit(1);
+				// Interactive mode
+				await interactiveRemoveCommand({
+					base: args.base,
+				});
+			} else {
+				removeCommand({
+					base: args.base,
+					branchName: args.positional,
+					force: args.force,
+				});
 			}
-			removeCommand({
-				base: args.base,
-				branchName: args.positional,
-				force: args.force,
-			});
 			break;
 		case 'dirname':
 			dirnameCommand({
@@ -100,4 +104,7 @@ function main(): void {
 	}
 }
 
-main();
+main().catch((error) => {
+	console.error('Error:', error instanceof Error ? error.message : String(error));
+	process.exit(1);
+});
