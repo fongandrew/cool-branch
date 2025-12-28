@@ -3,7 +3,8 @@
     "allow": [
       "Bash(pnpm run dev:*)",
       "Bash(pnpm test:*)",
-      "Bash(pnpm run test:*)"
+      "Bash(pnpm run test:*)",
+      "Bash(pnpm run typecheck:*)"
     ],
     "defaultMode": "acceptEdits"
   },
