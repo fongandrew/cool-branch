@@ -3,7 +3,14 @@
 import * as fs from 'node:fs';
 
 import { getWorktreeBasePath, getWorktreePath } from '../config.js';
-import { deleteBranch, getRepoRoot, listWorktrees, removeWorktree } from '../git.js';
+import {
+	deleteBranch,
+	getCurrentBranch,
+	getRepoRoot,
+	listBranches,
+	listWorktrees,
+	removeWorktree,
+} from '../git.js';
 import { isInteractive, promptConfirm, promptMultiSelect } from '../prompt.js';
 
 /**
@@ -92,24 +99,37 @@ export async function interactiveRemoveCommand(options: InteractiveRemoveOptions
 		process.exit(1);
 	}
 
-	// Get worktrees for this repo
+	// Get all branches and worktrees
+	const branches = listBranches();
 	const worktrees = listWorktrees();
+	const currentBranch = getCurrentBranch();
 
-	// Get the worktree base path for this repo to filter worktrees
+	// Get the worktree base path for this repo
 	const worktreeBase = getWorktreeBasePath(options.base);
 
-	// Filter to only worktrees in our managed base path (excluding main worktree)
-	const managedWorktrees = worktrees.filter(
-		(w) => !w.isMain && w.path.startsWith(worktreeBase) && w.branch,
-	);
+	// Build a map of branch -> worktree path (for managed worktrees only)
+	const branchWorktreeMap = new Map<string, string>();
+	for (const w of worktrees) {
+		if (!w.isMain && w.path.startsWith(worktreeBase) && w.branch) {
+			branchWorktreeMap.set(w.branch, w.path);
+		}
+	}
 
-	if (managedWorktrees.length === 0) {
-		console.log('No worktrees to remove.');
+	// Filter out current branch (can't delete it)
+	const availableBranches = branches.filter((b) => b !== currentBranch);
+
+	if (availableBranches.length === 0) {
+		console.log('No branches to remove.');
 		process.exit(0);
 	}
 
-	// Build display list
-	const displayOptions = managedWorktrees.map((w) => w.branch);
+	// Build display list with worktree indicators
+	const displayOptions = availableBranches.map((branch) => {
+		if (branchWorktreeMap.has(branch)) {
+			return `${branch} [worktree]`;
+		}
+		return branch;
+	});
 
 	// Prompt for multi-selection
 	const indices = await promptMultiSelect('Select branch(es) to remove:', displayOptions);
@@ -119,34 +139,35 @@ export async function interactiveRemoveCommand(options: InteractiveRemoveOptions
 		process.exit(1);
 	}
 
-	// Process each selected worktree
+	// Process each selected branch
 	for (const index of indices) {
-		const worktree = managedWorktrees[index];
-		if (!worktree) continue;
+		const branchName = availableBranches[index];
+		if (!branchName) continue;
 
-		const branchName = worktree.branch;
-		const worktreePath = worktree.path;
+		const worktreePath = branchWorktreeMap.get(branchName);
 
 		console.log(`\nRemoving ${branchName}...`);
 
-		// Try to remove the worktree
-		try {
-			removeWorktree(worktreePath, false);
-		} catch (_error) {
-			// If it fails, offer to force remove
-			const confirmed = await promptConfirm(`Remove '${branchName}' with --force?`, true);
-			if (confirmed) {
-				try {
-					removeWorktree(worktreePath, true);
-				} catch (forceError) {
-					const forceMessage =
-						forceError instanceof Error ? forceError.message : String(forceError);
-					console.error(`Error: Failed to force remove worktree: ${forceMessage}`);
+		// If branch has a worktree, remove it first
+		if (worktreePath) {
+			try {
+				removeWorktree(worktreePath, false);
+			} catch (_error) {
+				// If it fails, offer to force remove
+				const confirmed = await promptConfirm(`Remove '${branchName}' with --force?`, true);
+				if (confirmed) {
+					try {
+						removeWorktree(worktreePath, true);
+					} catch (forceError) {
+						const forceMessage =
+							forceError instanceof Error ? forceError.message : String(forceError);
+						console.error(`Error: Failed to force remove worktree: ${forceMessage}`);
+						continue;
+					}
+				} else {
+					console.log(`Skipping ${branchName}`);
 					continue;
 				}
-			} else {
-				console.log(`Skipping ${branchName}`);
-				continue;
 			}
 		}
 
@@ -156,8 +177,13 @@ export async function interactiveRemoveCommand(options: InteractiveRemoveOptions
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			console.warn(`Warning: Could not delete branch '${branchName}': ${message}`);
+			continue;
 		}
 
-		console.log(`Worktree and branch '${branchName}' removed`);
+		if (worktreePath) {
+			console.log(`Worktree and branch '${branchName}' removed`);
+		} else {
+			console.log(`Branch '${branchName}' removed`);
+		}
 	}
 }
