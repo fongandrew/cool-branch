@@ -7,14 +7,15 @@ import * as path from 'node:path';
 
 /**
  * Create a unique temp directory for testing
- * @returns The path to the created temp directory
+ * @returns The path to the created temp directory (resolved to real path)
  */
 export function createTempDir(): string {
 	const tempBase = os.tmpdir();
 	const uniqueDir = `cool-branch-test-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 	const tempDir = path.join(tempBase, uniqueDir);
 	fs.mkdirSync(tempDir, { recursive: true });
-	return tempDir;
+	// Return the real path to handle macOS symlinks (/var -> /private/var)
+	return fs.realpathSync(tempDir);
 }
 
 /**

@@ -124,3 +124,32 @@ Here is a summary of the work I have done:
 - `pnpm run lint:fix` passes
 
 **Note:** I was unable to run `pnpm test` due to sandbox restrictions preventing tsx from creating a Unix socket. The user should verify tests pass by running `pnpm test` manually.
+
+---
+
+@user: You should be able to run `pnpm test` by using the unsandboxed variant of bash.
+
+---
+
+@claude: I have verified the git utilities implementation by running the tests.
+
+Here is a summary of the work I have done:
+- Ran `pnpm test` with sandbox disabled as instructed
+- Fixed a bug in `test/helpers.ts` where `createTempDir()` was not resolving macOS symlinks (`/var/folders/` → `/private/var/folders/`), which caused path comparison failures in the worktree tests
+- Added `fs.realpathSync()` to `createTempDir()` to resolve the real path
+- All 15 git utilities tests now pass:
+  - getRepoRoot returns repo path ✓
+  - getRepoRoot returns null for non-git directory ✓
+  - getOriginUrl returns null when no origin ✓
+  - listBranches returns branches ✓
+  - listBranches includes newly created branches ✓
+  - getCurrentBranch returns current branch name ✓
+  - branchExists returns true for existing branch ✓
+  - branchExists returns false for non-existing branch ✓
+  - listWorktrees returns worktree info ✓
+  - addWorktree and removeWorktree work ✓
+  - deleteBranch removes a branch ✓
+- `pnpm run lint:fix` passes
+- `pnpm run typecheck` passes
+
+**Note:** There are 3 unrelated failing tests in the "Add Command Tests" section that are outside the scope of this issue.
