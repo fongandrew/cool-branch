@@ -11,6 +11,7 @@ import {
 	getRepoRoot,
 	listBranches,
 	listWorktrees,
+	removeWorktree,
 	runGit,
 } from '../git.js';
 import { isInteractive, promptConfirm, promptSelect, type SelectResult } from '../prompt.js';
@@ -125,9 +126,19 @@ export function addCommand(options: AddOptions): void {
 			console.error('Use -f to force overwrite.');
 			process.exit(1);
 		}
-		// Force mode: remove existing directory
-		removeDirectoryRecursive(targetPath);
+		// Force mode: properly remove the existing worktree (directory + git registration)
+		try {
+			removeWorktree(targetPath, true);
+		} catch {
+			// If removeWorktree fails (e.g., directory already partially removed),
+			// clean up stale registrations and remove any remaining directory
+			runGit(['worktree', 'prune']);
+			removeDirectoryRecursive(targetPath);
+		}
 	}
+
+	// Clean up any stale worktree registrations before adding
+	runGit(['worktree', 'prune']);
 
 	// Fetch from remote (ignore errors if no remote exists)
 	runGit(['fetch', 'origin']);
