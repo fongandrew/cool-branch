@@ -193,3 +193,21 @@ Warning: Setup script failed (exit code 1). Continuing anyway.
 7. `pnpm test` shows all tests passing
 8. `pnpm run typecheck` passes
 9. `pnpm run lint:fix` passes
+
+---
+
+@claude: I have implemented post-setup script execution after worktree creation.
+
+Here is a summary of the work I have done:
+- Added 5 new tests to `test/integration.ts` covering all the specified scenarios (running default `.cool-branch-setup`, respecting `--no-setup`, using custom `--setup` script, handling script failures, and warning on missing explicit scripts)
+- Confirmed the tests failed before implementation (TDD approach)
+- Added a `runSetupScript()` helper function to `src/commands/add.ts` that executes scripts in the worktree directory with the worktree path as the first argument
+- Updated `addCommand()` to run setup scripts after worktree creation with the following behavior:
+  - If `--no-setup` is specified, skip script execution entirely
+  - If `--setup <path>` is specified, look for that script relative to repo root; warn if not found
+  - Otherwise, look for `.cool-branch-setup` in the repo root; skip silently if not found
+  - Execute the script with the worktree path as `$1` and cwd set to the worktree
+  - If the script fails, print a warning and continue (don't fail the operation)
+- Verified all 43 tests pass (including 5 new post-setup tests)
+- Verified `pnpm run lint:fix` passes
+- Verified `pnpm run typecheck` passes

@@ -625,6 +625,135 @@ test('rm: errors when worktree does not exist', async () => {
 });
 
 // ============================================================================
+// Post-Setup Script Tests
+// ============================================================================
+
+test('add: runs .cool-branch-setup when it exists', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		// Create a setup script that creates a marker file
+		fs.writeFileSync(
+			path.join(dir, '.cool-branch-setup'),
+			`#!/bin/bash
+echo "setup ran" > "$1/setup-marker.txt"
+`,
+			{ mode: 0o755 },
+		);
+		execSync('git add .cool-branch-setup && git commit -m "Add setup script"', { cwd: dir });
+
+		// Create worktree
+		const repoName = path.basename(dir);
+		runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+
+		// Verify setup script ran
+		assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('add: respects --no-setup flag', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		// Create a setup script
+		fs.writeFileSync(
+			path.join(dir, '.cool-branch-setup'),
+			`#!/bin/bash
+echo "setup ran" > "$1/setup-marker.txt"
+`,
+			{ mode: 0o755 },
+		);
+		execSync('git add .cool-branch-setup && git commit -m "Add setup script"', { cwd: dir });
+
+		// Create worktree with --no-setup
+		const repoName = path.basename(dir);
+		runCLI(['add', 'feature-x', '--no-setup', '--base', base], { cwd: dir });
+
+		// Verify setup script did NOT run
+		assert(!fs.existsSync(path.join(base, repoName, 'feature-x', 'setup-marker.txt')));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('add: uses custom script with --setup', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		// Create a custom setup script
+		fs.writeFileSync(
+			path.join(dir, 'custom-setup.sh'),
+			`#!/bin/bash
+echo "custom setup" > "$1/custom-marker.txt"
+`,
+			{ mode: 0o755 },
+		);
+		execSync('git add custom-setup.sh && git commit -m "Add custom script"', { cwd: dir });
+
+		// Create worktree with --setup
+		const repoName = path.basename(dir);
+		runCLI(['add', 'feature-x', '--setup', 'custom-setup.sh', '--base', base], { cwd: dir });
+
+		// Verify custom script ran
+		assertFileExists(path.join(base, repoName, 'feature-x', 'custom-marker.txt'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('add: continues if setup script fails', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		// Create a setup script that fails
+		fs.writeFileSync(
+			path.join(dir, '.cool-branch-setup'),
+			`#!/bin/bash
+exit 1
+`,
+			{ mode: 0o755 },
+		);
+		execSync('git add .cool-branch-setup && git commit -m "Add failing script"', { cwd: dir });
+
+		// Create worktree - should still succeed
+		const repoName = path.basename(dir);
+		const result = runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+		assertExitCode(result, 0);
+		assertFileExists(path.join(base, repoName, 'feature-x'));
+		// Should warn about script failure
+		assert(result.stdout.includes('Warning') || result.stderr.includes('Warning'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+test('add: warns if --setup script does not exist', async () => {
+	const dir = createTempDir();
+	const base = createTempDir();
+	try {
+		initGitRepo(dir);
+		const result = runCLI(['add', 'feature-x', '--setup', 'nonexistent.sh', '--base', base], {
+			cwd: dir,
+		});
+		assertExitCode(result, 0); // Should still succeed
+		assert(result.stdout.includes('Warning') || result.stderr.includes('Warning'));
+	} finally {
+		cleanupTempDir(dir);
+		cleanupTempDir(base);
+	}
+});
+
+// ============================================================================
 // Interactive Mode Tests
 // ============================================================================
 

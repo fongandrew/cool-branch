@@ -1,5 +1,6 @@
 // Add command - creates a new worktree for a branch
 
+import { execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -23,6 +24,43 @@ export interface AddOptions {
 	force: boolean;
 	setup: string | undefined;
 	noSetup: boolean;
+}
+
+/**
+ * Result of running a setup script
+ */
+interface RunScriptResult {
+	success: boolean;
+	stdout: string;
+	stderr: string;
+}
+
+/**
+ * Run a setup script in the worktree directory
+ * @param scriptPath Absolute path to the script
+ * @param worktreePath Path to the worktree directory
+ * @returns Result of script execution
+ */
+function runSetupScript(scriptPath: string, worktreePath: string): RunScriptResult {
+	try {
+		const result = execSync(`"${scriptPath}" "${worktreePath}"`, {
+			cwd: worktreePath,
+			encoding: 'utf-8',
+			stdio: ['pipe', 'pipe', 'pipe'],
+		});
+		return {
+			success: true,
+			stdout: result,
+			stderr: '',
+		};
+	} catch (error) {
+		const execError = error as { stdout?: string; stderr?: string };
+		return {
+			success: false,
+			stdout: execError.stdout ?? '',
+			stderr: execError.stderr ?? '',
+		};
+	}
 }
 
 /**
@@ -125,6 +163,42 @@ export function addCommand(options: AddOptions): void {
 	}
 
 	console.log(`Worktree created at: ${targetPath}`);
+
+	// Run setup script if applicable
+	if (!options.noSetup) {
+		let scriptPath: string | null = null;
+		let isExplicitScript = false;
+
+		if (options.setup) {
+			// Custom script specified via --setup
+			scriptPath = path.resolve(repoRoot, options.setup);
+			isExplicitScript = true;
+		} else {
+			// Look for default .cool-branch-setup in repo root
+			const defaultScript = path.join(repoRoot, '.cool-branch-setup');
+			if (fs.existsSync(defaultScript)) {
+				scriptPath = defaultScript;
+			}
+		}
+
+		if (scriptPath) {
+			if (!fs.existsSync(scriptPath)) {
+				// Script specified via --setup but doesn't exist
+				if (isExplicitScript) {
+					console.log(`Warning: Setup script not found: ${scriptPath}`);
+				}
+				// For default script, skip silently (already checked above)
+			} else {
+				console.log('Running setup script...');
+				const result = runSetupScript(scriptPath, targetPath);
+				if (result.success) {
+					console.log('Setup complete.');
+				} else {
+					console.log('Warning: Setup script failed. Continuing anyway.');
+				}
+			}
+		}
+	}
 }
 
 /**
