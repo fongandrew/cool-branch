@@ -107,46 +107,14 @@ function findSetupScriptInCoolBranchDir(coolBranchDir: string): string | null {
 }
 
 /**
- * Find a legacy setup script in the repo root
- * Looks for files named "cool-branch" with or without extension (e.g., cool-branch, cool-branch.sh)
- * @param repoRoot Path to repo root
- * @returns Path to the script if found, null otherwise
- */
-function findLegacySetupScript(repoRoot: string): string | null {
-	try {
-		const entries = fs.readdirSync(repoRoot);
-		for (const entry of entries) {
-			// Match cool-branch or cool-branch.* (with any extension)
-			if (
-				entry === 'cool-branch' ||
-				(entry.startsWith('cool-branch.') && entry !== 'cool-branch.')
-			) {
-				return path.join(repoRoot, entry);
-			}
-		}
-	} catch {
-		// Directory doesn't exist or can't be read
-	}
-	return null;
-}
-
-/**
  * Find a setup script in the repo
- * First checks .cool-branch/setup or .cool-branch/setup.*, then falls back to
- * cool-branch or cool-branch.* in repo root for backwards compatibility
+ * Checks .cool-branch/setup or .cool-branch/setup.*
  * @param repoRoot Path to the repo root
  * @returns Path to the script if found, null otherwise
  */
 function findSetupScript(repoRoot: string): string | null {
-	// First, try .cool-branch/setup or .cool-branch/setup.*
 	const coolBranchDir = path.join(repoRoot, '.cool-branch');
-	const newScript = findSetupScriptInCoolBranchDir(coolBranchDir);
-	if (newScript) {
-		return newScript;
-	}
-
-	// Fall back to legacy location: cool-branch or cool-branch.* in repo root
-	return findLegacySetupScript(repoRoot);
+	return findSetupScriptInCoolBranchDir(coolBranchDir);
 }
 
 /**

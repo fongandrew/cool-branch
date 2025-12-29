@@ -110,3 +110,26 @@ Here is a summary of the work I have done:
 - All 53 tests pass (including 4 new tests for this feature)
 - `pnpm run lint:fix` passes
 - `pnpm run typecheck` passes
+
+---
+
+@user: Remove legacy / backwards compat support
+
+---
+
+@claude: I have removed the legacy/backwards compatibility support for setup scripts in the repo root (`cool-branch` or `cool-branch.*`).
+
+Here is a summary of the work I have done:
+- Removed the `findLegacySetupScript()` function from `src/commands/add.ts`
+- Simplified `findSetupScript()` to only look in `.cool-branch/setup` or `.cool-branch/setup.*`
+- Updated 6 tests to use the new `.cool-branch/setup` format instead of the legacy `cool-branch.*` format
+- Removed 4 legacy-specific tests that are no longer applicable:
+  - "add: runs cool-branch.sh when it exists"
+  - "add: runs cool-branch with any extension"
+  - "add: runs plain cool-branch file with no extension"
+  - "add: prefers .cool-branch/setup over legacy cool-branch.sh"
+  - "add: falls back to legacy cool-branch.sh if no .cool-branch/setup"
+  - "add: legacy cool-branch.sh in main repo does not run if not in worktree"
+- All 69 tests pass
+- `pnpm run lint:fix` passes
+- `pnpm run typecheck` passes

@@ -346,32 +346,18 @@ test('rm: errors when worktree does not exist', ({ dir, base }) => {
 // Post-Setup Script Tests
 // ============================================================================
 
-test('add: runs cool-branch.sh when it exists', ({ dir, base }) => {
-	initGitRepo(dir);
-	fs.writeFileSync(
-		path.join(dir, 'cool-branch.sh'),
-		`#!/bin/bash
-echo "setup ran" > "$1/setup-marker.txt"
-`,
-		{ mode: 0o755 },
-	);
-	execSync('git add cool-branch.sh && git commit -m "Add setup script"', { cwd: dir });
-	const repoName = path.basename(dir);
-	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
-	assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
-});
-
 test('add: streams setup script stdout to console', ({ dir, base }) => {
 	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
 	fs.writeFileSync(
-		path.join(dir, 'cool-branch.sh'),
+		path.join(dir, '.cool-branch', 'setup'),
 		`#!/bin/bash
 echo "Installing dependencies..."
 echo "Build complete!"
 `,
 		{ mode: 0o755 },
 	);
-	execSync('git add cool-branch.sh && git commit -m "Add setup script"', { cwd: dir });
+	execSync('git add .cool-branch && git commit -m "Add setup script"', { cwd: dir });
 	const result = runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
 	assertExitCode(result, 0);
 	assert(result.stdout.includes('Installing dependencies...'), 'Should show setup script stdout');
@@ -389,47 +375,17 @@ test('add: shows git worktree output', ({ dir, base }) => {
 	);
 });
 
-test('add: runs cool-branch with any extension', ({ dir, base }) => {
-	initGitRepo(dir);
-	// Use .bash extension to verify any extension works
-	fs.writeFileSync(
-		path.join(dir, 'cool-branch.bash'),
-		`#!/bin/bash
-echo "setup ran" > "$1/setup-marker.txt"
-`,
-		{ mode: 0o755 },
-	);
-	execSync('git add cool-branch.bash && git commit -m "Add setup script"', { cwd: dir });
-	const repoName = path.basename(dir);
-	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
-	assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
-});
-
-test('add: runs plain cool-branch file with no extension', ({ dir, base }) => {
-	initGitRepo(dir);
-	fs.writeFileSync(
-		path.join(dir, 'cool-branch'),
-		`#!/bin/bash
-echo "setup ran" > "$1/setup-marker.txt"
-`,
-		{ mode: 0o755 },
-	);
-	execSync('git add cool-branch && git commit -m "Add setup script"', { cwd: dir });
-	const repoName = path.basename(dir);
-	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
-	assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
-});
-
 test('add: respects --no-setup flag', ({ dir, base }) => {
 	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
 	fs.writeFileSync(
-		path.join(dir, 'cool-branch.sh'),
+		path.join(dir, '.cool-branch', 'setup'),
 		`#!/bin/bash
 echo "setup ran" > "$1/setup-marker.txt"
 `,
 		{ mode: 0o755 },
 	);
-	execSync('git add cool-branch.sh && git commit -m "Add setup script"', { cwd: dir });
+	execSync('git add .cool-branch && git commit -m "Add setup script"', { cwd: dir });
 	const repoName = path.basename(dir);
 	runCLI(['add', 'feature-x', '--no-setup', '--base', base], { cwd: dir });
 	assert(!fs.existsSync(path.join(base, repoName, 'feature-x', 'setup-marker.txt')));
@@ -452,15 +408,16 @@ echo "custom setup" > "$1/custom-marker.txt"
 
 test('add: exits with error if setup script fails', ({ dir, base }) => {
 	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
 	fs.writeFileSync(
-		path.join(dir, 'cool-branch.sh'),
+		path.join(dir, '.cool-branch', 'setup'),
 		`#!/bin/bash
 echo "This is the error message" >&2
 exit 1
 `,
 		{ mode: 0o755 },
 	);
-	execSync('git add cool-branch.sh && git commit -m "Add failing script"', { cwd: dir });
+	execSync('git add .cool-branch && git commit -m "Add failing script"', { cwd: dir });
 	const repoName = path.basename(dir);
 	const result = runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
 	// Should exit with error code
@@ -553,50 +510,6 @@ echo "new setup ran" > "$1/setup-marker.txt"
 		{ mode: 0o755 },
 	);
 	execSync('git add .cool-branch && git commit -m "Add setup script"', { cwd: dir });
-	const repoName = path.basename(dir);
-	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
-	assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
-});
-
-test('add: prefers .cool-branch/setup over legacy cool-branch.sh', ({ dir, base }) => {
-	initGitRepo(dir);
-	// Create legacy script
-	fs.writeFileSync(
-		path.join(dir, 'cool-branch.sh'),
-		`#!/bin/bash
-echo "legacy" > "$1/which-setup.txt"
-`,
-		{ mode: 0o755 },
-	);
-	// Create new script
-	fs.mkdirSync(path.join(dir, '.cool-branch'));
-	fs.writeFileSync(
-		path.join(dir, '.cool-branch', 'setup'),
-		`#!/bin/bash
-echo "new" > "$1/which-setup.txt"
-`,
-		{ mode: 0o755 },
-	);
-	execSync('git add . && git commit -m "Add both scripts"', { cwd: dir });
-	const repoName = path.basename(dir);
-	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
-	const content = fs.readFileSync(
-		path.join(base, repoName, 'feature-x', 'which-setup.txt'),
-		'utf-8',
-	);
-	assert(content.includes('new'), 'Should run .cool-branch/setup over legacy');
-});
-
-test('add: falls back to legacy cool-branch.sh if no .cool-branch/setup', ({ dir, base }) => {
-	initGitRepo(dir);
-	fs.writeFileSync(
-		path.join(dir, 'cool-branch.sh'),
-		`#!/bin/bash
-echo "legacy ran" > "$1/setup-marker.txt"
-`,
-		{ mode: 0o755 },
-	);
-	execSync('git add cool-branch.sh && git commit -m "Add legacy script"', { cwd: dir });
 	const repoName = path.basename(dir);
 	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
 	assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
@@ -997,29 +910,6 @@ echo "custom" > "$1/setup-marker.txt"
 	const repoName = path.basename(dir);
 	runCLI(['add', 'feature-x', '--base', base, '--setup', 'custom-setup.sh'], { cwd: dir });
 	assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
-});
-
-test('add: legacy cool-branch.sh in main repo does not run if not in worktree', ({ dir, base }) => {
-	initGitRepo(dir);
-	// Legacy setup only in main, not on branch
-	fs.writeFileSync(
-		path.join(dir, 'cool-branch.sh'),
-		`#!/bin/bash
-echo "legacy ran" > "$1/setup-marker.txt"
-`,
-		{ mode: 0o755 },
-	);
-	execSync('git add cool-branch.sh && git commit -m "Add legacy setup"', { cwd: dir });
-	// Create branch without the script
-	execSync('git checkout -b no-legacy-branch', { cwd: dir });
-	fs.unlinkSync(path.join(dir, 'cool-branch.sh'));
-	execSync('git add -A && git commit -m "Remove legacy setup"', { cwd: dir });
-	execSync('git checkout main', { cwd: dir });
-	const repoName = path.basename(dir);
-	const result = runCLI(['add', 'no-legacy-branch', '--base', base], { cwd: dir });
-	assertExitCode(result, 0);
-	// Legacy setup should NOT have run
-	assert(!fs.existsSync(path.join(base, repoName, 'no-legacy-branch', 'setup-marker.txt')));
 });
 
 // Run all tests
