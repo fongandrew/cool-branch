@@ -141,3 +141,28 @@ test('dirname: shows deprecation warning', ({ dir, base }) => {
 - [ ] All existing tests still pass
 - [ ] `pnpm run lint:fix` passes
 - [ ] `pnpm run typecheck` passes
+---
+
+@claude: I have implemented the `config` command for managing `.cool-branch/config.json` and `config.local.json` files.
+
+Here is a summary of the work I have done:
+- Added 8 new TDD tests for the config command in `test/integration.ts`
+- Created `src/commands/config.ts` implementing the config command with:
+  - `config` (no args) - List all merged config values
+  - `config <key>` - Get a specific config value
+  - `config <key> <value>` - Set a config value in config.json
+  - `config --local <key> <value>` - Set a config value in config.local.json
+  - `config --unset <key>` - Remove a key from config.json
+  - `config --unset --local <key>` - Remove a key from config.local.json
+  - Validation for `copyConfig` values (must be `all`, `none`, or `local`)
+- Updated `src/cli.ts` to:
+  - Add 'config' as a valid command
+  - Parse new flags: `--local` and `--unset`
+  - Support second positional argument (`positional2`) for config values
+  - Update help message with config command documentation
+- Updated `src/index.ts` to:
+  - Wire up the config command
+  - Add deprecation warning to the dirname command
+- All 84 tests pass
+- `pnpm run lint:fix` passes
+- `pnpm run typecheck` passes

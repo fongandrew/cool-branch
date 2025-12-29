@@ -1001,5 +1001,114 @@ test('list: --config flag works with list command', ({ dir, base }) => {
 	assertExitCode(result, 0);
 });
 
+// ============================================================================
+// Config Command Tests (p1-070)
+// ============================================================================
+
+// Config get/set tests
+test('config: set creates .cool-branch/config.json', ({ dir, base }) => {
+	initGitRepo(dir);
+	assert(!fs.existsSync(path.join(dir, '.cool-branch', 'config.json')));
+	const result = runCLI(['config', 'dirname', 'my-dirname', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assertFileExists(path.join(dir, '.cool-branch', 'config.json'));
+	const config = JSON.parse(
+		fs.readFileSync(path.join(dir, '.cool-branch', 'config.json'), 'utf-8'),
+	);
+	assert.strictEqual(config.dirname, 'my-dirname');
+});
+
+test('config: get returns value from config.json', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'), { recursive: true });
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.json'),
+		JSON.stringify({ dirname: 'test-value' }),
+	);
+	const result = runCLI(['config', 'dirname', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assert(result.stdout.includes('test-value'));
+});
+
+test('config: list shows all config values', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'), { recursive: true });
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.json'),
+		JSON.stringify({ dirname: 'my-dir', base: '/custom/base' }),
+	);
+	const result = runCLI(['config', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assert(result.stdout.includes('dirname'));
+	assert(result.stdout.includes('my-dir'));
+	assert(result.stdout.includes('base'));
+});
+
+test('config: --local sets value in config.local.json', ({ dir, base }) => {
+	initGitRepo(dir);
+	const result = runCLI(['config', '--local', 'dirname', 'local-dirname', '--base', base], {
+		cwd: dir,
+	});
+	assertExitCode(result, 0);
+	assertFileExists(path.join(dir, '.cool-branch', 'config.local.json'));
+	const config = JSON.parse(
+		fs.readFileSync(path.join(dir, '.cool-branch', 'config.local.json'), 'utf-8'),
+	);
+	assert.strictEqual(config.dirname, 'local-dirname');
+});
+
+test('config: get merges local and regular config', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'), { recursive: true });
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.json'),
+		JSON.stringify({ dirname: 'regular', base: '/regular/base' }),
+	);
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.local.json'),
+		JSON.stringify({ dirname: 'local' }),
+	);
+	const result = runCLI(['config', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	// Local dirname should override
+	assert(result.stdout.includes('local'));
+	// Base from regular config should still show
+	assert(result.stdout.includes('/regular/base'));
+});
+
+test('config: --unset removes key from config', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'), { recursive: true });
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.json'),
+		JSON.stringify({ dirname: 'to-remove', base: '/keep/this' }),
+	);
+	const result = runCLI(['config', '--unset', 'dirname', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	const config = JSON.parse(
+		fs.readFileSync(path.join(dir, '.cool-branch', 'config.json'), 'utf-8'),
+	);
+	assert(!('dirname' in config));
+	assert.strictEqual(config.base, '/keep/this');
+});
+
+test('config: validates copyConfig values', ({ dir, base }) => {
+	initGitRepo(dir);
+	const result = runCLI(['config', 'copyConfig', 'invalid-value', '--base', base], { cwd: dir });
+	assertExitCode(result, 1);
+	assert(result.stderr.includes('invalid') || result.stderr.includes('must be'));
+});
+
+// Dirname deprecation test
+test('dirname: shows deprecation warning', ({ dir, base }) => {
+	initGitRepo(dir);
+	const result = runCLI(['dirname', 'old-way', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assert(
+		result.stdout.includes('deprecated') || result.stderr.includes('deprecated'),
+		'Should show deprecation warning',
+	);
+});
+
 // Run all tests
 runTests();

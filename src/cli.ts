@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 /**
  * Available commands
  */
-export type Command = 'help' | 'list' | 'add' | 'rm' | 'dirname';
+export type Command = 'help' | 'list' | 'add' | 'rm' | 'dirname' | 'config';
 
 /**
  * Copy config modes for .cool-branch directory
@@ -20,6 +20,7 @@ export type CopyConfigMode = 'all' | 'none' | 'local';
 export interface ParsedArgs {
 	command: Command;
 	positional: string | undefined;
+	positional2: string | undefined; // second positional for config <key> <value>
 	base: string;
 	baseExplicit: boolean; // true if --base was explicitly provided
 	force: boolean;
@@ -27,6 +28,8 @@ export interface ParsedArgs {
 	noSetup: boolean;
 	copyConfig: CopyConfigMode | undefined; // undefined means use config file or default
 	config: string | undefined; // path to custom config file or directory
+	local: boolean; // for config --local
+	unset: boolean; // for config --unset
 	help: boolean;
 	version: boolean;
 }
@@ -45,6 +48,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 	const result: ParsedArgs = {
 		command: 'help',
 		positional: undefined,
+		positional2: undefined,
 		base: DEFAULT_BASE,
 		baseExplicit: false,
 		force: false,
@@ -52,12 +56,14 @@ export function parseArgs(argv: string[]): ParsedArgs {
 		noSetup: false,
 		copyConfig: undefined,
 		config: undefined,
+		local: false,
+		unset: false,
 		help: false,
 		version: false,
 	};
 
 	const args = [...argv];
-	const validCommands = ['list', 'add', 'rm', 'dirname'];
+	const validCommands = ['list', 'add', 'rm', 'dirname', 'config'];
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i] as string;
@@ -95,6 +101,10 @@ export function parseArgs(argv: string[]): ParsedArgs {
 			if (i < args.length) {
 				result.config = args[i] as string;
 			}
+		} else if (arg === '--local') {
+			result.local = true;
+		} else if (arg === '--unset') {
+			result.unset = true;
 		} else if (arg.startsWith('-')) {
 			// Unknown flag - ignore for now
 		} else if (validCommands.includes(arg) && result.command === 'help') {
@@ -103,6 +113,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
 		} else if (result.positional === undefined) {
 			// Positional argument (branch-name or folder-name)
 			result.positional = arg;
+		} else if (result.positional2 === undefined) {
+			// Second positional argument (for config <key> <value>)
+			result.positional2 = arg;
 		}
 	}
 
@@ -134,7 +147,15 @@ Usage:
   cool-branch rm [options] [<branch-name>]
                                Remove a worktree
   cool-branch dirname [<folder-name>]
-                               Get or set dirname for a worktree
+                               Get or set dirname (deprecated, use config)
+  cool-branch config           List all config values
+  cool-branch config <key>     Get a config value
+  cool-branch config <key> <value>
+                               Set a config value
+  cool-branch config --unset <key>
+                               Remove a config key
+  cool-branch config --local <key> <value>
+                               Set a config value in config.local.json
 
 Options:
   --base <path>     Base directory for worktrees (default: ~/.worktrees)
@@ -145,6 +166,8 @@ Options:
   --copy-config <mode>
                     Copy .cool-branch directory to new worktree (add only)
                     Modes: all, none, local (default: local)
+  --local           (config) Use config.local.json instead of config.json
+  --unset           (config) Remove a key from config
   -h, --help        Show help
   -v, --version     Show version
 `);
@@ -161,5 +184,5 @@ export function showVersion(): void {
  * Check if a command is valid
  */
 export function isValidCommand(cmd: string): boolean {
-	return ['list', 'add', 'rm', 'dirname'].includes(cmd);
+	return ['list', 'add', 'rm', 'dirname', 'config'].includes(cmd);
 }

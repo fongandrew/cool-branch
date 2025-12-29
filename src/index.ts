@@ -2,6 +2,7 @@
 
 import { parseArgs, showHelp, showVersion } from './cli';
 import { addCommand, interactiveAddCommand } from './commands/add';
+import { configCommand } from './commands/config';
 import { dirnameCommand } from './commands/dirname';
 import { listCommand } from './commands/list';
 import { interactiveRemoveCommand, removeCommand } from './commands/remove';
@@ -27,7 +28,7 @@ async function main(): Promise<void> {
 
 	// Check for unknown commands (first positional arg that's not a known command)
 	const rawArgs = process.argv.slice(2);
-	const validCommands = ['list', 'add', 'rm', 'dirname'];
+	const validCommands = ['list', 'add', 'rm', 'dirname', 'config'];
 	const flags = [
 		'-h',
 		'--help',
@@ -40,6 +41,8 @@ async function main(): Promise<void> {
 		'--setup',
 		'--copy-config',
 		'--config',
+		'--local',
+		'--unset',
 	];
 
 	for (let i = 0; i < rawArgs.length; i++) {
@@ -132,9 +135,22 @@ async function main(): Promise<void> {
 			}
 			break;
 		case 'dirname':
+			// Show deprecation warning
+			console.log(
+				'Warning: The "dirname" command is deprecated. Use "cool-branch config dirname" instead.',
+			);
 			dirnameCommand({
 				base: effectiveBase,
 				folderName: args.positional,
+			});
+			break;
+		case 'config':
+			configCommand({
+				base: effectiveBase,
+				key: args.positional,
+				value: args.positional2,
+				local: args.local,
+				unset: args.unset,
 			});
 			break;
 	}
