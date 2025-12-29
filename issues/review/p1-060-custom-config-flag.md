@@ -125,3 +125,26 @@ Options:
 - [ ] All existing tests still pass
 - [ ] `pnpm run lint:fix` passes
 - [ ] `pnpm run typecheck` passes
+
+---
+
+@claude: I have implemented the `--config` CLI flag that allows users to specify a custom config file or directory.
+
+Here is a summary of the work I have done:
+- Added 7 new TDD tests to `test/integration.ts` for the --config flag functionality
+- Added `--config` flag parsing in `src/cli.ts` with the `config` field in `ParsedArgs`
+- Implemented `loadCustomConfig()` function in `src/config.ts` that handles:
+  - Direct path to a JSON config file (e.g., `--config /path/to/my-config.json`)
+  - Path to a directory containing `config.json` (e.g., `--config /path/to/config-dir/`)
+  - Error handling for non-existent paths or directories without config.json
+- Updated `src/index.ts` to integrate the --config flag with proper precedence:
+  1. CLI flags (`--base`, etc.) - highest precedence
+  2. `--config` specified config file
+  3. `.cool-branch/config.local.json`
+  4. `.cool-branch/config.json`
+  5. Global config (`<base>/cool-branch.json`)
+  6. Defaults
+- Updated help text to include the new `--config <path>` option
+- All 76 tests pass (including 7 new tests for this feature)
+- `pnpm run lint:fix` passes
+- `pnpm run typecheck` passes

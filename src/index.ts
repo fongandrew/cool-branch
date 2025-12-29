@@ -5,7 +5,7 @@ import { addCommand, interactiveAddCommand } from './commands/add';
 import { dirnameCommand } from './commands/dirname';
 import { listCommand } from './commands/list';
 import { interactiveRemoveCommand, removeCommand } from './commands/remove';
-import { readLocalConfig } from './config';
+import { loadCustomConfig, readLocalConfig } from './config';
 
 /**
  * Main entry point
@@ -39,13 +39,19 @@ async function main(): Promise<void> {
 		'--base',
 		'--setup',
 		'--copy-config',
+		'--config',
 	];
 
 	for (let i = 0; i < rawArgs.length; i++) {
 		const arg = rawArgs[i] as string;
 		// Skip flags and their values
 		if (flags.includes(arg)) {
-			if (arg === '--base' || arg === '--setup' || arg === '--copy-config') {
+			if (
+				arg === '--base' ||
+				arg === '--setup' ||
+				arg === '--copy-config' ||
+				arg === '--config'
+			) {
 				i++; // Skip the next argument (value)
 			}
 			continue;
@@ -60,13 +66,23 @@ async function main(): Promise<void> {
 		break;
 	}
 
-	// Read local config from .cool-branch/config.json
-	const localConfig = readLocalConfig();
+	// Load custom config if --config flag was specified
+	let customConfig: ReturnType<typeof loadCustomConfig> | undefined;
+	if (args.config) {
+		customConfig = loadCustomConfig(args.config);
+		if (customConfig.error) {
+			console.error(`Error: ${customConfig.error}`);
+			process.exit(1);
+		}
+	}
 
-	// Determine effective base: CLI flag > local config > default
+	// Read local config from .cool-branch/config.json (only if no --config flag)
+	const localConfig = customConfig ? customConfig.config : readLocalConfig();
+
+	// Determine effective base: CLI flag > custom config > local config > default
 	const effectiveBase = args.baseExplicit ? args.base : (localConfig.base ?? args.base);
 
-	// Get local dirname (only if not overridden by CLI --base)
+	// Get local dirname (from custom config or local config)
 	const localDirname = localConfig.dirname;
 
 	// Dispatch to command handlers

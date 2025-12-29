@@ -58,6 +58,52 @@ function parseLocalConfigFile(configPath: string): LocalConfig {
 }
 
 /**
+ * Result from loading a custom config
+ */
+export interface CustomConfigResult {
+	config: LocalConfig;
+	error?: string;
+}
+
+/**
+ * Load a custom config from a specified path
+ * @param configPath Path to a config file or directory containing config.json
+ * @returns Object with config and optional error message
+ */
+export function loadCustomConfig(configPath: string): CustomConfigResult {
+	if (!fs.existsSync(configPath)) {
+		return {
+			config: {},
+			error: `Config path does not exist: ${configPath}`,
+		};
+	}
+
+	const stat = fs.statSync(configPath);
+
+	if (stat.isFile()) {
+		// Direct path to a config file
+		const config = parseLocalConfigFile(configPath);
+		return { config };
+	} else if (stat.isDirectory()) {
+		// Directory - look for config.json inside
+		const configFilePath = path.join(configPath, 'config.json');
+		if (!fs.existsSync(configFilePath)) {
+			return {
+				config: {},
+				error: `Config file not found: ${configFilePath}`,
+			};
+		}
+		const config = parseLocalConfigFile(configFilePath);
+		return { config };
+	}
+
+	return {
+		config: {},
+		error: `Invalid config path: ${configPath}`,
+	};
+}
+
+/**
  * Read the local config from .cool-branch/ directory in the repo root
  * Reads both config.json and config.local.json, with local values taking precedence
  * @param cwd Working directory (optional)

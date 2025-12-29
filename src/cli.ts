@@ -26,6 +26,7 @@ export interface ParsedArgs {
 	setup: string | undefined;
 	noSetup: boolean;
 	copyConfig: CopyConfigMode | undefined; // undefined means use config file or default
+	config: string | undefined; // path to custom config file or directory
 	help: boolean;
 	version: boolean;
 }
@@ -50,6 +51,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 		setup: undefined,
 		noSetup: false,
 		copyConfig: undefined,
+		config: undefined,
 		help: false,
 		version: false,
 	};
@@ -87,6 +89,11 @@ export function parseArgs(argv: string[]): ParsedArgs {
 				if (value === 'all' || value === 'none' || value === 'local') {
 					result.copyConfig = value;
 				}
+			}
+		} else if (arg === '--config') {
+			i++;
+			if (i < args.length) {
+				result.config = args[i] as string;
 			}
 		} else if (arg.startsWith('-')) {
 			// Unknown flag - ignore for now
@@ -131,6 +138,7 @@ Usage:
 
 Options:
   --base <path>     Base directory for worktrees (default: ~/.worktrees)
+  --config <path>   Path to config file or directory containing config.json
   -f, --force       Force operation
   --setup <script>  Path to post-setup script (add only)
   --no-setup        Skip running the post-setup script (add only)
