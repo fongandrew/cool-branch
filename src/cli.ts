@@ -127,7 +127,7 @@ Usage:
   cool-branch rm [options] [<branch-name>]
                                Remove a worktree
   cool-branch dirname [<folder-name>]
-                               Get dirname for a worktree
+                               Get or set dirname for a worktree
 
 Options:
   --base <path>     Base directory for worktrees (default: ~/.worktrees)
