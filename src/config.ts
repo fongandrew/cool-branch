@@ -1,10 +1,53 @@
 // Configuration file management for cool-branch
 // Manages repo-to-folder mappings stored in <base>/cool-branch.json
+// Also supports per-repo config in .cool-branch/config.json
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { getOriginUrl, getRepoRoot } from './git';
+
+/**
+ * Local config file structure for .cool-branch/config.json
+ */
+export interface LocalConfig {
+	base?: string;
+	dirname?: string;
+}
+
+/**
+ * Read the local config file from .cool-branch/config.json in the repo root
+ * @param cwd Working directory (optional)
+ * @returns Local config object, or empty object if not found or invalid
+ */
+export function readLocalConfig(cwd?: string): LocalConfig {
+	const repoRoot = getRepoRoot(cwd);
+	if (!repoRoot) {
+		return {};
+	}
+
+	const configPath = path.join(repoRoot, '.cool-branch', 'config.json');
+	if (!fs.existsSync(configPath)) {
+		return {};
+	}
+
+	try {
+		const content = fs.readFileSync(configPath, 'utf-8');
+		const parsed = JSON.parse(content);
+		// Validate and extract only known fields
+		const result: LocalConfig = {};
+		if (typeof parsed.base === 'string') {
+			result.base = parsed.base;
+		}
+		if (typeof parsed.dirname === 'string') {
+			result.dirname = parsed.dirname;
+		}
+		return result;
+	} catch {
+		// Invalid JSON or read error - return empty config
+		return {};
+	}
+}
 
 /**
  * Get the path to the config file
@@ -83,9 +126,20 @@ export function getRepoIdentifier(cwd?: string): string {
  * Looks up the mapping in config, or derives from repo basename and saves it
  * @param base Base directory for worktrees
  * @param cwd Working directory (optional)
+ * @param options Optional settings
+ * @param options.localDirname If provided, use this dirname (from local config) without saving to global config
  * @returns Folder name to use for this repo's worktrees
  */
-export function getRepoFolderName(base: string, cwd?: string): string {
+export function getRepoFolderName(
+	base: string,
+	cwd?: string,
+	options?: { localDirname?: string },
+): string {
+	// If local dirname is provided, use it directly without saving to global config
+	if (options?.localDirname) {
+		return options.localDirname;
+	}
+
 	const repoId = getRepoIdentifier(cwd);
 	const config = readConfig(base);
 
@@ -125,10 +179,16 @@ export function setRepoFolderName(base: string, folderName: string, cwd?: string
  * Get the base path for worktrees of the current repository
  * @param base Base directory for worktrees
  * @param cwd Working directory (optional)
+ * @param options Optional settings
+ * @param options.localDirname If provided, use this dirname (from local config) without saving to global config
  * @returns Path to <base>/<repo-folder-name>
  */
-export function getWorktreeBasePath(base: string, cwd?: string): string {
-	const folderName = getRepoFolderName(base, cwd);
+export function getWorktreeBasePath(
+	base: string,
+	cwd?: string,
+	options?: { localDirname?: string },
+): string {
+	const folderName = getRepoFolderName(base, cwd, options);
 	const worktreeBase = path.join(base, folderName);
 
 	// Create directory if it doesn't exist
@@ -144,10 +204,17 @@ export function getWorktreeBasePath(base: string, cwd?: string): string {
  * @param base Base directory for worktrees
  * @param branchName Branch name for the worktree
  * @param cwd Working directory (optional)
+ * @param options Optional settings
+ * @param options.localDirname If provided, use this dirname (from local config) without saving to global config
  * @returns Path to <base>/<repo-folder-name>/<branch-name>
  */
-export function getWorktreePath(base: string, branchName: string, cwd?: string): string {
-	const folderName = getRepoFolderName(base, cwd);
+export function getWorktreePath(
+	base: string,
+	branchName: string,
+	cwd?: string,
+	options?: { localDirname?: string },
+): string {
+	const folderName = getRepoFolderName(base, cwd, options);
 	return path.join(base, folderName, branchName);
 }
 

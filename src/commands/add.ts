@@ -21,6 +21,7 @@ import { isInteractive, promptConfirm, promptSelect, type SelectResult } from '.
  */
 export interface AddOptions {
 	base: string;
+	localDirname?: string | undefined;
 	branchName: string;
 	force: boolean;
 	setup: string | undefined;
@@ -159,11 +160,14 @@ export function addCommand(options: AddOptions): void {
 		process.exit(1);
 	}
 
+	// Prepare config options for path functions
+	const configOpts = options.localDirname ? { localDirname: options.localDirname } : undefined;
+
 	// Get the base path for worktrees of this repo (creates it if needed)
-	getWorktreeBasePath(options.base);
+	getWorktreeBasePath(options.base, undefined, configOpts);
 
 	// Get target path for the worktree
-	const targetPath = getWorktreePath(options.base, options.branchName);
+	const targetPath = getWorktreePath(options.base, options.branchName, undefined, configOpts);
 
 	// Check for existing directory
 	if (isNonEmptyDirectory(targetPath)) {
@@ -261,6 +265,7 @@ export function addCommand(options: AddOptions): void {
  */
 export interface InteractiveAddOptions {
 	base: string;
+	localDirname?: string | undefined;
 	setup: string | undefined;
 	noSetup: boolean;
 }
@@ -283,6 +288,9 @@ export async function interactiveAddCommand(options: InteractiveAddOptions): Pro
 		console.error('Usage: cool-branch add <branch-name>');
 		process.exit(1);
 	}
+
+	// Prepare config options for path functions
+	const configOpts = options.localDirname ? { localDirname: options.localDirname } : undefined;
 
 	// Get all branches and worktrees
 	const branches = listBranches();
@@ -312,7 +320,7 @@ export async function interactiveAddCommand(options: InteractiveAddOptions): Pro
 
 		// Check if it already has a worktree
 		if (worktreeBranches.has(branchName)) {
-			const worktreePath = getWorktreePath(options.base, branchName);
+			const worktreePath = getWorktreePath(options.base, branchName, undefined, configOpts);
 			const confirmed = await promptConfirm(
 				`Worktree exists at ${worktreePath}. Overwrite?`,
 				true,
@@ -333,7 +341,7 @@ export async function interactiveAddCommand(options: InteractiveAddOptions): Pro
 
 		// Check if this branch already has a worktree
 		if (worktreeBranches.has(branchName)) {
-			const worktreePath = getWorktreePath(options.base, branchName);
+			const worktreePath = getWorktreePath(options.base, branchName, undefined, configOpts);
 			const confirmed = await promptConfirm(
 				`Worktree exists at ${worktreePath}. Overwrite?`,
 				true,
@@ -349,6 +357,7 @@ export async function interactiveAddCommand(options: InteractiveAddOptions): Pro
 	// Proceed with add command
 	addCommand({
 		base: options.base,
+		localDirname: options.localDirname,
 		branchName,
 		force,
 		setup: options.setup,

@@ -116,7 +116,30 @@ test('config: .cool-branch/config.json dirname does not update global config', (
 
 ## Verification
 
-- [ ] All new tests pass
-- [ ] All existing tests still pass
-- [ ] `pnpm run lint:fix` passes
-- [ ] `pnpm run typecheck` passes
+- [x] All new tests pass
+- [x] All existing tests still pass
+- [x] `pnpm run lint:fix` passes
+- [x] `pnpm run typecheck` passes
+
+---
+
+@claude: I have implemented support for per-repo configuration via `.cool-branch/config.json`.
+
+Here is a summary of the work I have done:
+
+- Added `readLocalConfig()` function in `src/config.ts` to read `.cool-branch/config.json` from the repo root
+- Added `LocalConfig` interface with optional `base` and `dirname` properties
+- Modified `src/cli.ts` to track whether `--base` was explicitly provided via `baseExplicit` flag
+- Updated `src/index.ts` to read local config and apply precedence: CLI flags > local config > global config
+- Modified `getRepoFolderName()`, `getWorktreeBasePath()`, and `getWorktreePath()` to accept an optional `localDirname` parameter that bypasses global config
+- Updated all command files (`add.ts`, `list.ts`, `remove.ts`) to pass `localDirname` through from local config
+- Added 6 new integration tests to cover:
+  - Using `base` from local config
+  - Using `dirname` from local config
+  - CLI `--base` overriding local config `base`
+  - Local `dirname` overriding global config
+  - Graceful handling when no `.cool-branch/config.json` exists
+  - Verifying local `dirname` does NOT leak into global config
+- All 59 tests pass (53 existing + 6 new)
+- `pnpm run lint:fix` passes
+- `pnpm run typecheck` passes

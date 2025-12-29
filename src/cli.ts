@@ -16,6 +16,7 @@ export interface ParsedArgs {
 	command: Command;
 	positional: string | undefined;
 	base: string;
+	baseExplicit: boolean; // true if --base was explicitly provided
 	force: boolean;
 	setup: string | undefined;
 	noSetup: boolean;
@@ -38,6 +39,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 		command: 'help',
 		positional: undefined,
 		base: DEFAULT_BASE,
+		baseExplicit: false,
 		force: false,
 		setup: undefined,
 		noSetup: false,
@@ -64,6 +66,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 			i++;
 			if (i < args.length) {
 				result.base = args[i] as string;
+				result.baseExplicit = true;
 			}
 		} else if (arg === '--setup') {
 			i++;

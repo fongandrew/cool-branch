@@ -10,6 +10,7 @@ import { getCurrentBranch, getRepoRoot, listBranches, listWorktrees } from '../g
  */
 export interface ListOptions {
 	base: string;
+	localDirname?: string | undefined;
 }
 
 /**
@@ -35,8 +36,11 @@ export function listCommand(options: ListOptions): void {
 		process.exit(1);
 	}
 
+	// Prepare config options for path functions
+	const configOpts = options.localDirname ? { localDirname: options.localDirname } : undefined;
+
 	// Ensure config is populated with repo mapping
-	getRepoFolderName(options.base);
+	getRepoFolderName(options.base, undefined, configOpts);
 
 	// Get all branches
 	const branches = listBranches();

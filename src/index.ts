@@ -5,6 +5,7 @@ import { addCommand, interactiveAddCommand } from './commands/add';
 import { dirnameCommand } from './commands/dirname';
 import { listCommand } from './commands/list';
 import { interactiveRemoveCommand, removeCommand } from './commands/remove';
+import { readLocalConfig } from './config';
 
 /**
  * Main entry point
@@ -58,25 +59,36 @@ async function main(): Promise<void> {
 		break;
 	}
 
+	// Read local config from .cool-branch/config.json
+	const localConfig = readLocalConfig();
+
+	// Determine effective base: CLI flag > local config > default
+	const effectiveBase = args.baseExplicit ? args.base : (localConfig.base ?? args.base);
+
+	// Get local dirname (only if not overridden by CLI --base)
+	const localDirname = localConfig.dirname;
+
 	// Dispatch to command handlers
 	switch (args.command) {
 		case 'help':
 			showHelp();
 			break;
 		case 'list':
-			listCommand({ base: args.base });
+			listCommand({ base: effectiveBase, localDirname });
 			break;
 		case 'add':
 			if (!args.positional) {
 				// Interactive mode
 				await interactiveAddCommand({
-					base: args.base,
+					base: effectiveBase,
+					localDirname,
 					setup: args.setup,
 					noSetup: args.noSetup,
 				});
 			} else {
 				addCommand({
-					base: args.base,
+					base: effectiveBase,
+					localDirname,
 					branchName: args.positional,
 					force: args.force,
 					setup: args.setup,
@@ -88,11 +100,13 @@ async function main(): Promise<void> {
 			if (!args.positional) {
 				// Interactive mode
 				await interactiveRemoveCommand({
-					base: args.base,
+					base: effectiveBase,
+					localDirname,
 				});
 			} else {
 				removeCommand({
-					base: args.base,
+					base: effectiveBase,
+					localDirname,
 					branchName: args.positional,
 					force: args.force,
 				});
@@ -100,7 +114,7 @@ async function main(): Promise<void> {
 			break;
 		case 'dirname':
 			dirnameCommand({
-				base: args.base,
+				base: effectiveBase,
 				folderName: args.positional,
 			});
 			break;

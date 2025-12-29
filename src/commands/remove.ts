@@ -18,6 +18,7 @@ import { isInteractive, promptConfirm, promptMultiSelect } from '../prompt';
  */
 export interface RemoveOptions {
 	base: string;
+	localDirname?: string | undefined;
 	branchName: string;
 	force: boolean;
 }
@@ -34,8 +35,11 @@ export function removeCommand(options: RemoveOptions): void {
 		process.exit(1);
 	}
 
+	// Prepare config options for path functions
+	const configOpts = options.localDirname ? { localDirname: options.localDirname } : undefined;
+
 	// Get the expected worktree path
-	const worktreePath = getWorktreePath(options.base, options.branchName);
+	const worktreePath = getWorktreePath(options.base, options.branchName, undefined, configOpts);
 
 	// Check if worktree exists
 	if (!fs.existsSync(worktreePath)) {
@@ -78,6 +82,7 @@ export function removeCommand(options: RemoveOptions): void {
  */
 export interface InteractiveRemoveOptions {
 	base: string;
+	localDirname?: string | undefined;
 }
 
 /**
@@ -99,13 +104,16 @@ export async function interactiveRemoveCommand(options: InteractiveRemoveOptions
 		process.exit(1);
 	}
 
+	// Prepare config options for path functions
+	const configOpts = options.localDirname ? { localDirname: options.localDirname } : undefined;
+
 	// Get all branches and worktrees
 	const branches = listBranches();
 	const worktrees = listWorktrees();
 	const currentBranch = getCurrentBranch();
 
 	// Get the worktree base path for this repo
-	const worktreeBase = getWorktreeBasePath(options.base);
+	const worktreeBase = getWorktreeBasePath(options.base, undefined, configOpts);
 
 	// Build a map of branch -> worktree path (for managed worktrees only)
 	const branchWorktreeMap = new Map<string, string>();
