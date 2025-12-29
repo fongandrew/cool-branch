@@ -18,7 +18,15 @@
     "node": ">=18"
   },
   "keywords": ["git", "worktree", "cli"],
-  "author": "",
+  "author": "Andrew Fong <id@andrewfong.com>",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fongandrew/cool-branch.git"
+	},
+	"bugs": {
+		"url": "https://github.com/fongandrew/cool-branch/issues"
+	},
+	"homepage": "https://github.com/fongandrew/cool-branch#readme",
   "license": "MIT",
   "packageManager": "pnpm@10.22.0",
   "devDependencies": {
