@@ -48,17 +48,49 @@ function runSetupScript(scriptPath: string, worktreePath: string): boolean {
 }
 
 /**
+ * Find a local setup script in the .cool-branch directory
+ * Looks for files named "setup.local" with or without extension (e.g., setup.local, setup.local.sh)
+ * @param coolBranchDir Path to .cool-branch directory
+ * @returns Path to the script if found, null otherwise
+ */
+function findLocalSetupScriptInCoolBranchDir(coolBranchDir: string): string | null {
+	try {
+		const entries = fs.readdirSync(coolBranchDir);
+		for (const entry of entries) {
+			// Match setup.local or setup.local.* (with any extension)
+			if (entry === 'setup.local' || entry.startsWith('setup.local.')) {
+				return path.join(coolBranchDir, entry);
+			}
+		}
+	} catch {
+		// Directory doesn't exist or can't be read
+	}
+	return null;
+}
+
+/**
  * Find a setup script in the .cool-branch directory
- * Looks for files named "setup" with or without extension (e.g., setup, setup.sh)
+ * First checks for local variants (setup.local, setup.local.sh), then falls back to
+ * regular setup scripts (setup, setup.sh)
  * @param coolBranchDir Path to .cool-branch directory
  * @returns Path to the script if found, null otherwise
  */
 function findSetupScriptInCoolBranchDir(coolBranchDir: string): string | null {
+	// First try to find a local setup script
+	const localScript = findLocalSetupScriptInCoolBranchDir(coolBranchDir);
+	if (localScript) {
+		return localScript;
+	}
+
+	// Fall back to regular setup script
 	try {
 		const entries = fs.readdirSync(coolBranchDir);
 		for (const entry of entries) {
-			// Match setup or setup.* (with any extension)
-			if (entry === 'setup' || (entry.startsWith('setup.') && entry !== 'setup.')) {
+			// Match setup or setup.* (with any extension), but NOT setup.local*
+			if (
+				(entry === 'setup' || (entry.startsWith('setup.') && entry !== 'setup.')) &&
+				!entry.startsWith('setup.local')
+			) {
 				return path.join(coolBranchDir, entry);
 			}
 		}

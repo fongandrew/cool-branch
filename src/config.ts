@@ -16,17 +16,11 @@ export interface LocalConfig {
 }
 
 /**
- * Read the local config file from .cool-branch/config.json in the repo root
- * @param cwd Working directory (optional)
- * @returns Local config object, or empty object if not found or invalid
+ * Parse a config file and extract known fields
+ * @param configPath Path to the config file
+ * @returns Partial LocalConfig with extracted fields, or empty object if invalid
  */
-export function readLocalConfig(cwd?: string): LocalConfig {
-	const repoRoot = getRepoRoot(cwd);
-	if (!repoRoot) {
-		return {};
-	}
-
-	const configPath = path.join(repoRoot, '.cool-branch', 'config.json');
+function parseLocalConfigFile(configPath: string): LocalConfig {
 	if (!fs.existsSync(configPath)) {
 		return {};
 	}
@@ -47,6 +41,31 @@ export function readLocalConfig(cwd?: string): LocalConfig {
 		// Invalid JSON or read error - return empty config
 		return {};
 	}
+}
+
+/**
+ * Read the local config from .cool-branch/ directory in the repo root
+ * Reads both config.json and config.local.json, with local values taking precedence
+ * @param cwd Working directory (optional)
+ * @returns Local config object, or empty object if not found or invalid
+ */
+export function readLocalConfig(cwd?: string): LocalConfig {
+	const repoRoot = getRepoRoot(cwd);
+	if (!repoRoot) {
+		return {};
+	}
+
+	const coolBranchDir = path.join(repoRoot, '.cool-branch');
+
+	// Read both config files
+	const baseConfig = parseLocalConfigFile(path.join(coolBranchDir, 'config.json'));
+	const localConfig = parseLocalConfigFile(path.join(coolBranchDir, 'config.local.json'));
+
+	// Merge: local config overrides base config
+	return {
+		...baseConfig,
+		...localConfig,
+	};
 }
 
 /**

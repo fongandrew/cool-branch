@@ -695,5 +695,116 @@ test('config: .cool-branch/config.json dirname does not update global config', (
 	// If global config doesn't exist, that's also fine - it means local dirname didn't leak
 });
 
+// ============================================================================
+// Local Variant Tests (.local. files)
+// ============================================================================
+
+// Setup local variant tests
+test('add: runs setup.local instead of setup when both exist', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	// Regular setup
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup'),
+		`#!/bin/bash
+echo "regular" > "$1/which-setup.txt"
+`,
+		{ mode: 0o755 },
+	);
+	// Local setup
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup.local'),
+		`#!/bin/bash
+echo "local" > "$1/which-setup.txt"
+`,
+		{ mode: 0o755 },
+	);
+	execSync('git add .cool-branch/setup && git commit -m "Add setup"', { cwd: dir });
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	const content = fs.readFileSync(
+		path.join(base, repoName, 'feature-x', 'which-setup.txt'),
+		'utf-8',
+	);
+	assert(content.includes('local'), 'Should run local setup only');
+});
+
+test('add: runs setup.local.sh with extension', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup.local.sh'),
+		`#!/bin/bash
+echo "local ran" > "$1/setup-marker.txt"
+`,
+		{ mode: 0o755 },
+	);
+	execSync('git add .cool-branch && git commit -m "Add dir"', { cwd: dir });
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
+});
+
+test('add: falls back to regular setup when no local exists', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup'),
+		`#!/bin/bash
+echo "regular ran" > "$1/setup-marker.txt"
+`,
+		{ mode: 0o755 },
+	);
+	execSync('git add .cool-branch && git commit -m "Add setup"', { cwd: dir });
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
+});
+
+// Config local variant tests
+test('add: config.local.json overrides config.json values', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.json'),
+		JSON.stringify({ dirname: 'from-config' }),
+	);
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.local.json'),
+		JSON.stringify({ dirname: 'from-local' }),
+	);
+	execSync('git add .cool-branch/config.json && git commit -m "Add config"', { cwd: dir });
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	assertFileExists(path.join(base, 'from-local', 'feature-x'));
+});
+
+test('add: config.local.json falls back to config.json for missing keys', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.json'),
+		JSON.stringify({ dirname: 'from-config' }),
+	);
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.local.json'),
+		JSON.stringify({}), // Empty local config
+	);
+	execSync('git add .cool-branch/config.json && git commit -m "Add config"', { cwd: dir });
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	assertFileExists(path.join(base, 'from-config', 'feature-x'));
+});
+
+test('add: uses only config.json when no local exists', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.json'),
+		JSON.stringify({ dirname: 'from-config' }),
+	);
+	execSync('git add .cool-branch && git commit -m "Add config"', { cwd: dir });
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	assertFileExists(path.join(base, 'from-config', 'feature-x'));
+});
+
 // Run all tests
 runTests();

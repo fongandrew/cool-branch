@@ -133,7 +133,21 @@ test('add: uses only config.json when no local exists', ({ dir, base }) => {
 
 ## Verification
 
-- [ ] All new tests pass
-- [ ] All existing tests still pass
-- [ ] `pnpm run lint:fix` passes
-- [ ] `pnpm run typecheck` passes
+- [x] All new tests pass
+- [x] All existing tests still pass
+- [x] `pnpm run lint:fix` passes
+- [x] `pnpm run typecheck` passes
+
+---
+
+@claude: I have implemented support for `*.local.*` variants of setup and config files.
+
+Here is a summary of the work I have done:
+- Added 6 new integration tests for local variant support (3 for setup scripts, 3 for config files)
+- Modified `findSetupScriptInCoolBranchDir()` in `src/commands/add.ts` to prioritize local setup scripts (`setup.local`, `setup.local.sh`, etc.) over regular setup scripts
+- Added new helper function `findLocalSetupScriptInCoolBranchDir()` to find local variants
+- Modified `readLocalConfig()` in `src/config.ts` to read both `config.json` and `config.local.json`, merging them with local values taking precedence
+- Added helper function `parseLocalConfigFile()` to extract known fields from config files
+- All 65 tests pass (including 6 new local variant tests)
+- `pnpm run lint:fix` passes
+- `pnpm run typecheck` passes
