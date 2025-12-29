@@ -38,13 +38,14 @@ async function main(): Promise<void> {
 		'--no-setup',
 		'--base',
 		'--setup',
+		'--copy-config',
 	];
 
 	for (let i = 0; i < rawArgs.length; i++) {
 		const arg = rawArgs[i] as string;
 		// Skip flags and their values
 		if (flags.includes(arg)) {
-			if (arg === '--base' || arg === '--setup') {
+			if (arg === '--base' || arg === '--setup' || arg === '--copy-config') {
 				i++; // Skip the next argument (value)
 			}
 			continue;
@@ -84,6 +85,7 @@ async function main(): Promise<void> {
 					localDirname,
 					setup: args.setup,
 					noSetup: args.noSetup,
+					copyConfig: args.copyConfig,
 				});
 			} else {
 				addCommand({
@@ -93,6 +95,7 @@ async function main(): Promise<void> {
 					force: args.force,
 					setup: args.setup,
 					noSetup: args.noSetup,
+					copyConfig: args.copyConfig,
 				});
 			}
 			break;

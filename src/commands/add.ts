@@ -4,7 +4,7 @@ import { execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-import { getWorktreeBasePath, getWorktreePath } from '../config';
+import { getWorktreeBasePath, getWorktreePath, readLocalConfig } from '../config';
 import {
 	addWorktree,
 	branchExists,
@@ -17,6 +17,11 @@ import {
 import { isInteractive, promptConfirm, promptSelect, type SelectResult } from '../prompt';
 
 /**
+ * Copy config modes for .cool-branch directory
+ */
+export type CopyConfigMode = 'all' | 'none' | 'local';
+
+/**
  * Options for the add command
  */
 export interface AddOptions {
@@ -26,6 +31,7 @@ export interface AddOptions {
 	force: boolean;
 	setup: string | undefined;
 	noSetup: boolean;
+	copyConfig?: CopyConfigMode | undefined;
 }
 
 /**
@@ -181,6 +187,72 @@ function isNonEmptyDirectory(dirPath: string): boolean {
 }
 
 /**
+ * Check if a filename matches the local pattern
+ * Matches: *.local (e.g., setup.local) or *.local.* (e.g., setup.local.sh, config.local.json)
+ * @param filename Name of the file
+ * @returns true if the filename matches local pattern
+ */
+function isLocalFile(filename: string): boolean {
+	// Match *.local (no extension after .local)
+	if (filename.endsWith('.local')) {
+		return true;
+	}
+	// Match *.local.* (has extension after .local)
+	return filename.includes('.local.');
+}
+
+/**
+ * Copy files from the source .cool-branch directory to the target
+ * @param sourceCoolBranchDir Path to source .cool-branch directory
+ * @param targetCoolBranchDir Path to target .cool-branch directory
+ * @param mode Copy mode: 'all', 'none', or 'local'
+ */
+function copyCoolBranchDir(
+	sourceCoolBranchDir: string,
+	targetCoolBranchDir: string,
+	mode: CopyConfigMode,
+): void {
+	if (mode === 'none') {
+		return;
+	}
+
+	if (!fs.existsSync(sourceCoolBranchDir)) {
+		return;
+	}
+
+	try {
+		const entries = fs.readdirSync(sourceCoolBranchDir, { withFileTypes: true });
+
+		for (const entry of entries) {
+			const sourcePath = path.join(sourceCoolBranchDir, entry.name);
+			const targetPath = path.join(targetCoolBranchDir, entry.name);
+
+			// Skip directories (don't copy subdirectories)
+			if (entry.isDirectory()) {
+				continue;
+			}
+
+			// In 'local' mode, only copy files matching local patterns
+			if (mode === 'local' && !isLocalFile(entry.name)) {
+				continue;
+			}
+
+			// Ensure target directory exists
+			if (!fs.existsSync(targetCoolBranchDir)) {
+				fs.mkdirSync(targetCoolBranchDir, { recursive: true });
+			}
+
+			// Copy the file, preserving mode
+			const sourceStats = fs.statSync(sourcePath);
+			fs.copyFileSync(sourcePath, targetPath);
+			fs.chmodSync(targetPath, sourceStats.mode);
+		}
+	} catch {
+		// Ignore errors during copy - non-critical operation
+	}
+}
+
+/**
  * Add a new worktree for the specified branch
  * @param options Command options
  */
@@ -257,6 +329,14 @@ export function addCommand(options: AddOptions): void {
 
 	console.log(`Worktree created at: ${targetPath}`);
 
+	// Copy .cool-branch directory to worktree
+	// Determine copy mode: CLI flag > config file > default (local)
+	const localConfig = readLocalConfig();
+	const copyMode = options.copyConfig ?? localConfig.copyConfig ?? 'local';
+	const sourceCoolBranchDir = path.join(repoRoot, '.cool-branch');
+	const targetCoolBranchDir = path.join(targetPath, '.cool-branch');
+	copyCoolBranchDir(sourceCoolBranchDir, targetCoolBranchDir, copyMode);
+
 	// Run setup script if applicable
 	if (!options.noSetup) {
 		let scriptPath: string | null = null;
@@ -300,6 +380,7 @@ export interface InteractiveAddOptions {
 	localDirname?: string | undefined;
 	setup: string | undefined;
 	noSetup: boolean;
+	copyConfig?: CopyConfigMode | undefined;
 }
 
 /**
@@ -394,5 +475,6 @@ export async function interactiveAddCommand(options: InteractiveAddOptions): Pro
 		force,
 		setup: options.setup,
 		noSetup: options.noSetup,
+		copyConfig: options.copyConfig,
 	});
 }

@@ -806,5 +806,107 @@ test('add: uses only config.json when no local exists', ({ dir, base }) => {
 	assertFileExists(path.join(base, 'from-config', 'feature-x'));
 });
 
+// ============================================================================
+// Copy Config Tests (.cool-branch directory copying)
+// ============================================================================
+
+test('add: copies local files by default', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup.local.sh'),
+		'#!/bin/bash\necho "local"',
+		{ mode: 0o755 },
+	);
+	fs.writeFileSync(path.join(dir, '.cool-branch', 'config.local.json'), '{}');
+	fs.writeFileSync(path.join(dir, '.cool-branch', 'setup.sh'), '#!/bin/bash\necho "regular"', {
+		mode: 0o755,
+	});
+	execSync('git add .cool-branch/setup.sh && git commit -m "Add setup"', { cwd: dir });
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	const worktreePath = path.join(base, repoName, 'feature-x');
+	// Local files should be copied
+	assertFileExists(path.join(worktreePath, '.cool-branch', 'setup.local.sh'));
+	assertFileExists(path.join(worktreePath, '.cool-branch', 'config.local.json'));
+	// Non-local file should NOT be copied (it comes from git)
+});
+
+test('add: --copy-config=all copies everything', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	fs.writeFileSync(path.join(dir, '.cool-branch', 'custom-file.txt'), 'custom content');
+	fs.writeFileSync(path.join(dir, '.cool-branch', 'setup.local'), '#!/bin/bash\necho "local"', {
+		mode: 0o755,
+	});
+	execSync('git add .cool-branch && git commit -m "Add cool-branch dir"', { cwd: dir });
+	// Add an untracked file after commit
+	fs.writeFileSync(path.join(dir, '.cool-branch', 'untracked.txt'), 'untracked');
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base, '--copy-config', 'all'], { cwd: dir });
+	const worktreePath = path.join(base, repoName, 'feature-x');
+	assertFileExists(path.join(worktreePath, '.cool-branch', 'untracked.txt'));
+	assertFileExists(path.join(worktreePath, '.cool-branch', 'setup.local'));
+});
+
+test('add: --copy-config=none copies nothing', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	// Create a non-local file and commit it (to ensure .cool-branch exists in git)
+	fs.writeFileSync(path.join(dir, '.cool-branch', 'setup.sh'), '#!/bin/bash\necho "regular"', {
+		mode: 0o755,
+	});
+	execSync('git add .cool-branch && git commit -m "Add dir"', { cwd: dir });
+	// Create a local file AFTER commit (not tracked by git)
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup.local.sh'),
+		'#!/bin/bash\necho "local"',
+		{ mode: 0o755 },
+	);
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base, '--copy-config', 'none'], { cwd: dir });
+	const worktreePath = path.join(base, repoName, 'feature-x');
+	// Local files should NOT be copied when mode is 'none'
+	assert(!fs.existsSync(path.join(worktreePath, '.cool-branch', 'setup.local.sh')));
+});
+
+test('add: copyConfig in config.json controls copy behavior', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.json'),
+		JSON.stringify({ copyConfig: 'none' }),
+	);
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup.local.sh'),
+		'#!/bin/bash\necho "local"',
+		{ mode: 0o755 },
+	);
+	execSync('git add .cool-branch/config.json && git commit -m "Add config"', { cwd: dir });
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	const worktreePath = path.join(base, repoName, 'feature-x');
+	assert(!fs.existsSync(path.join(worktreePath, '.cool-branch', 'setup.local.sh')));
+});
+
+test('add: --copy-config flag overrides config.json copyConfig', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.json'),
+		JSON.stringify({ copyConfig: 'none' }),
+	);
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup.local.sh'),
+		'#!/bin/bash\necho "local"',
+		{ mode: 0o755 },
+	);
+	execSync('git add .cool-branch/config.json && git commit -m "Add config"', { cwd: dir });
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base, '--copy-config', 'local'], { cwd: dir });
+	const worktreePath = path.join(base, repoName, 'feature-x');
+	assertFileExists(path.join(worktreePath, '.cool-branch', 'setup.local.sh'));
+});
+
 // Run all tests
 runTests();

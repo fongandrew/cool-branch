@@ -8,11 +8,17 @@ import * as path from 'node:path';
 import { getOriginUrl, getRepoRoot } from './git';
 
 /**
+ * Copy config modes for .cool-branch directory
+ */
+export type CopyConfigMode = 'all' | 'none' | 'local';
+
+/**
  * Local config file structure for .cool-branch/config.json
  */
 export interface LocalConfig {
 	base?: string;
 	dirname?: string;
+	copyConfig?: CopyConfigMode;
 }
 
 /**
@@ -35,6 +41,13 @@ function parseLocalConfigFile(configPath: string): LocalConfig {
 		}
 		if (typeof parsed.dirname === 'string') {
 			result.dirname = parsed.dirname;
+		}
+		if (
+			parsed.copyConfig === 'all' ||
+			parsed.copyConfig === 'none' ||
+			parsed.copyConfig === 'local'
+		) {
+			result.copyConfig = parsed.copyConfig;
 		}
 		return result;
 	} catch {

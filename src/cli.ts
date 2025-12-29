@@ -10,6 +10,11 @@ import { fileURLToPath } from 'node:url';
 export type Command = 'help' | 'list' | 'add' | 'rm' | 'dirname';
 
 /**
+ * Copy config modes for .cool-branch directory
+ */
+export type CopyConfigMode = 'all' | 'none' | 'local';
+
+/**
  * Parsed CLI options
  */
 export interface ParsedArgs {
@@ -20,6 +25,7 @@ export interface ParsedArgs {
 	force: boolean;
 	setup: string | undefined;
 	noSetup: boolean;
+	copyConfig: CopyConfigMode | undefined; // undefined means use config file or default
 	help: boolean;
 	version: boolean;
 }
@@ -43,6 +49,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 		force: false,
 		setup: undefined,
 		noSetup: false,
+		copyConfig: undefined,
 		help: false,
 		version: false,
 	};
@@ -72,6 +79,14 @@ export function parseArgs(argv: string[]): ParsedArgs {
 			i++;
 			if (i < args.length) {
 				result.setup = args[i] as string;
+			}
+		} else if (arg === '--copy-config') {
+			i++;
+			if (i < args.length) {
+				const value = args[i] as string;
+				if (value === 'all' || value === 'none' || value === 'local') {
+					result.copyConfig = value;
+				}
 			}
 		} else if (arg.startsWith('-')) {
 			// Unknown flag - ignore for now
@@ -119,6 +134,9 @@ Options:
   -f, --force       Force operation
   --setup <script>  Path to post-setup script (add only)
   --no-setup        Skip running the post-setup script (add only)
+  --copy-config <mode>
+                    Copy .cool-branch directory to new worktree (add only)
+                    Modes: all, none, local (default: local)
   -h, --help        Show help
   -v, --version     Show version
 `);

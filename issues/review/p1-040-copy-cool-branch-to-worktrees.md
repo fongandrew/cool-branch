@@ -105,7 +105,27 @@ test('add: --copy-config flag overrides config.json copyConfig', ({ dir, base })
 
 ## Verification
 
-- [ ] All new tests pass
-- [ ] All existing tests still pass
-- [ ] `pnpm run lint:fix` passes
-- [ ] `pnpm run typecheck` passes
+- [x] All new tests pass
+- [x] All existing tests still pass
+- [x] `pnpm run lint:fix` passes
+- [x] `pnpm run typecheck` passes
+
+---
+
+@claude: I have implemented the copy config feature that allows copying the `.cool-branch` directory to new worktrees.
+
+Here is a summary of the work I have done:
+
+- Added `CopyConfigMode` type (`'all' | 'none' | 'local'`) and `copyConfig` field to `LocalConfig` interface in `src/config.ts`
+- Updated `parseLocalConfigFile()` to parse the `copyConfig` option from config files
+- Added `--copy-config` CLI flag with validation for `all`, `none`, and `local` values in `src/cli.ts`
+- Updated help message to document the new `--copy-config` option
+- Implemented `isLocalFile()` helper function to match `*.local` and `*.local.*` patterns in `src/commands/add.ts`
+- Implemented `copyCoolBranchDir()` function to copy files based on the copy mode
+- Integrated copy logic into `addCommand()` - copying happens after worktree creation but before setup script runs
+- Added `copyConfig` option to `AddOptions` and `InteractiveAddOptions` interfaces
+- Updated `index.ts` to pass `copyConfig` from CLI args to add commands
+- Added all 5 tests from the issue to `test/integration.ts`
+- Fixed one test that had a bug (was committing the local file to git, so it would appear in worktree regardless of copy mode)
+
+All 70 tests pass, lint:fix passes, and typecheck passes.
