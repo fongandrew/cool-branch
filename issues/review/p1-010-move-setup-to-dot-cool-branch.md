@@ -92,7 +92,21 @@ echo "legacy ran" > "$1/setup-marker.txt"
 
 ## Verification
 
-- [ ] All new tests pass
-- [ ] All existing tests still pass
-- [ ] `pnpm run lint:fix` passes
-- [ ] `pnpm run typecheck` passes
+- [x] All new tests pass
+- [x] All existing tests still pass
+- [x] `pnpm run lint:fix` passes
+- [x] `pnpm run typecheck` passes
+
+---
+
+@claude: I have implemented support for `.cool-branch/setup` as the new location for setup scripts, with backwards compatibility for the legacy `cool-branch.*` location.
+
+Here is a summary of the work I have done:
+- Added 4 TDD tests to `test/integration.ts` covering the new `.cool-branch/setup` location, extension support (`.sh`, etc.), priority over legacy scripts, and fallback behavior
+- Refactored `findSetupScript()` in `src/commands/add.ts` into three functions:
+  - `findSetupScriptInCoolBranchDir()` - looks for `setup` or `setup.*` in `.cool-branch/` directory
+  - `findLegacySetupScript()` - looks for `cool-branch` or `cool-branch.*` in repo root
+  - `findSetupScript()` - orchestrates the lookup, preferring new location with legacy fallback
+- All 53 tests pass (including 4 new tests for this feature)
+- `pnpm run lint:fix` passes
+- `pnpm run typecheck` passes
