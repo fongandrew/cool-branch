@@ -5,6 +5,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import { getWorktreeBasePath, getWorktreePath, readLocalConfig } from '../config';
+import { getCoolBranchDir } from '../constants';
 import {
 	addWorktree,
 	branchExists,
@@ -113,8 +114,7 @@ function findSetupScriptInCoolBranchDir(coolBranchDir: string): string | null {
  * @returns Path to the script if found, null otherwise
  */
 function findSetupScript(repoRoot: string): string | null {
-	const coolBranchDir = path.join(repoRoot, '.cool-branch');
-	return findSetupScriptInCoolBranchDir(coolBranchDir);
+	return findSetupScriptInCoolBranchDir(getCoolBranchDir(repoRoot));
 }
 
 /**
@@ -301,8 +301,8 @@ export function addCommand(options: AddOptions): void {
 	// Determine copy mode: CLI flag > config file > default (local)
 	const localConfig = readLocalConfig();
 	const copyMode = options.copyConfig ?? localConfig.copyConfig ?? 'local';
-	const sourceCoolBranchDir = path.join(repoRoot, '.cool-branch');
-	const targetCoolBranchDir = path.join(targetPath, '.cool-branch');
+	const sourceCoolBranchDir = getCoolBranchDir(repoRoot);
+	const targetCoolBranchDir = getCoolBranchDir(targetPath);
 	copyCoolBranchDir(sourceCoolBranchDir, targetCoolBranchDir, copyMode);
 
 	// Run setup script if applicable

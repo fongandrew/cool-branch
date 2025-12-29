@@ -5,6 +5,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import { getCoolBranchConfigPath, getCoolBranchLocalConfigPath } from './constants';
 import { getOriginUrl, getRepoRoot } from './git';
 
 /**
@@ -68,11 +69,9 @@ export function readLocalConfig(cwd?: string): LocalConfig {
 		return {};
 	}
 
-	const coolBranchDir = path.join(repoRoot, '.cool-branch');
-
 	// Read both config files
-	const baseConfig = parseLocalConfigFile(path.join(coolBranchDir, 'config.json'));
-	const localConfig = parseLocalConfigFile(path.join(coolBranchDir, 'config.local.json'));
+	const baseConfig = parseLocalConfigFile(getCoolBranchConfigPath(repoRoot));
+	const localConfig = parseLocalConfigFile(getCoolBranchLocalConfigPath(repoRoot));
 
 	// Merge: local config overrides base config
 	return {

@@ -29,7 +29,24 @@ Search for `.cool-branch` string literals and update:
 
 ## Verification
 
-- [ ] All references to `.cool-branch` use the constant/utility
-- [ ] All existing tests still pass
-- [ ] `pnpm run lint:fix` passes
-- [ ] `pnpm run typecheck` passes
+- [x] All references to `.cool-branch` use the constant/utility
+- [x] All existing tests still pass
+- [x] `pnpm run lint:fix` passes
+- [x] `pnpm run typecheck` passes
+
+---
+
+@claude: I have completed the refactoring of `.cool-branch` directory references into a centralized constant and utilities.
+
+Here is a summary of the work I have done:
+- Created `src/constants.ts` with `COOL_BRANCH_DIR = '.cool-branch'` constant and three utility functions:
+  - `getCoolBranchDir(repoRoot)` - returns path to .cool-branch directory
+  - `getCoolBranchConfigPath(repoRoot)` - returns path to .cool-branch/config.json
+  - `getCoolBranchLocalConfigPath(repoRoot)` - returns path to .cool-branch/config.local.json
+- Updated `src/config.ts` to use `getCoolBranchConfigPath()` and `getCoolBranchLocalConfigPath()` instead of hardcoded paths
+- Updated `src/commands/add.ts` to use `getCoolBranchDir()` instead of `path.join(repoRoot, '.cool-branch')` in two places:
+  - `findSetupScript()` function
+  - `addCommand()` for source/target directory copying
+- Left tests with explicit `.cool-branch` strings for clarity (as noted in implementation notes)
+- All remaining `.cool-branch` references in source files are comments/documentation only
+- All 69 tests pass, typecheck passes, lint passes
