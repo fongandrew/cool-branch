@@ -13,21 +13,45 @@ export interface GitResult {
 }
 
 /**
+ * Options for running git commands
+ */
+export interface RunGitOptions {
+	cwd?: string | undefined;
+	/** If true, print stdout/stderr to console */
+	verbose?: boolean | undefined;
+}
+
+/**
  * Run a git command and return the result
  * @param args Arguments to pass to git
- * @param cwd Working directory (optional)
+ * @param options Options including cwd and verbose flag
  * @returns Object with stdout, stderr, and exitCode
  */
-export function runGit(args: string[], cwd?: string): GitResult {
+export function runGit(args: string[], options?: string | RunGitOptions): GitResult {
+	// Support legacy string cwd parameter
+	const opts: RunGitOptions = typeof options === 'string' ? { cwd: options } : (options ?? {});
+
 	const result = spawnSync('git', args, {
-		cwd,
+		cwd: opts.cwd,
 		encoding: 'utf-8',
 		stdio: ['pipe', 'pipe', 'pipe'],
 	});
 
+	const stdout = result.stdout?.trim() ?? '';
+	const stderr = result.stderr?.trim() ?? '';
+
+	if (opts.verbose) {
+		if (stdout) {
+			console.log(stdout);
+		}
+		if (stderr) {
+			console.error(stderr);
+		}
+	}
+
 	return {
-		stdout: result.stdout?.trim() ?? '',
-		stderr: result.stderr?.trim() ?? '',
+		stdout,
+		stderr,
 		exitCode: result.status ?? 1,
 	};
 }
@@ -202,7 +226,7 @@ export function addWorktree(
 		args.push(worktreePath, branchName);
 	}
 
-	const result = runGit(args, cwd);
+	const result = runGit(args, { cwd, verbose: true });
 	if (result.exitCode !== 0) {
 		throw new Error(`Failed to add worktree: ${result.stderr || result.stdout}`);
 	}
@@ -221,7 +245,7 @@ export function removeWorktree(worktreePath: string, force: boolean, cwd?: strin
 		args.push('--force');
 	}
 
-	const result = runGit(args, cwd);
+	const result = runGit(args, { cwd, verbose: true });
 	if (result.exitCode !== 0) {
 		throw new Error(`Failed to remove worktree: ${result.stderr || result.stdout}`);
 	}

@@ -28,39 +28,21 @@ export interface AddOptions {
 }
 
 /**
- * Result of running a setup script
- */
-interface RunScriptResult {
-	success: boolean;
-	stdout: string;
-	stderr: string;
-}
-
-/**
  * Run a setup script in the worktree directory
+ * Streams stdout/stderr to console in real-time
  * @param scriptPath Absolute path to the script
  * @param worktreePath Path to the worktree directory
- * @returns Result of script execution
+ * @returns true if script succeeded, false otherwise
  */
-function runSetupScript(scriptPath: string, worktreePath: string): RunScriptResult {
+function runSetupScript(scriptPath: string, worktreePath: string): boolean {
 	try {
-		const result = execSync(`"${scriptPath}" "${worktreePath}"`, {
+		execSync(`"${scriptPath}" "${worktreePath}"`, {
 			cwd: worktreePath,
-			encoding: 'utf-8',
-			stdio: ['pipe', 'pipe', 'pipe'],
+			stdio: 'inherit',
 		});
-		return {
-			success: true,
-			stdout: result,
-			stderr: '',
-		};
-	} catch (error) {
-		const execError = error as { stdout?: string; stderr?: string };
-		return {
-			success: false,
-			stdout: execError.stdout ?? '',
-			stderr: execError.stderr ?? '',
-		};
+		return true;
+	} catch {
+		return false;
 	}
 }
 
@@ -222,11 +204,12 @@ export function addCommand(options: AddOptions): void {
 				// For default script, skip silently (already checked above)
 			} else {
 				console.log('Running setup script...');
-				const result = runSetupScript(scriptPath, targetPath);
-				if (result.success) {
+				const success = runSetupScript(scriptPath, targetPath);
+				if (success) {
 					console.log('Setup complete.');
 				} else {
-					console.log('Warning: Setup script failed. Continuing anyway.');
+					console.error('Error: Setup script failed.');
+					process.exit(1);
 				}
 			}
 		}

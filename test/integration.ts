@@ -361,6 +361,34 @@ echo "setup ran" > "$1/setup-marker.txt"
 	assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
 });
 
+test('add: streams setup script stdout to console', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.writeFileSync(
+		path.join(dir, 'cool-branch.sh'),
+		`#!/bin/bash
+echo "Installing dependencies..."
+echo "Build complete!"
+`,
+		{ mode: 0o755 },
+	);
+	execSync('git add cool-branch.sh && git commit -m "Add setup script"', { cwd: dir });
+	const result = runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assert(result.stdout.includes('Installing dependencies...'), 'Should show setup script stdout');
+	assert(result.stdout.includes('Build complete!'), 'Should show setup script stdout');
+});
+
+test('add: shows git worktree output', ({ dir, base }) => {
+	initGitRepo(dir);
+	const result = runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	// Git worktree add outputs "Preparing worktree" message
+	assert(
+		result.stdout.includes('Preparing') || result.stderr.includes('Preparing'),
+		'Should show git worktree output',
+	);
+});
+
 test('add: runs cool-branch with any extension', ({ dir, base }) => {
 	initGitRepo(dir);
 	// Use .bash extension to verify any extension works
@@ -422,11 +450,12 @@ echo "custom setup" > "$1/custom-marker.txt"
 	assertFileExists(path.join(base, repoName, 'feature-x', 'custom-marker.txt'));
 });
 
-test('add: continues if setup script fails', ({ dir, base }) => {
+test('add: exits with error if setup script fails', ({ dir, base }) => {
 	initGitRepo(dir);
 	fs.writeFileSync(
 		path.join(dir, 'cool-branch.sh'),
 		`#!/bin/bash
+echo "This is the error message" >&2
 exit 1
 `,
 		{ mode: 0o755 },
@@ -434,9 +463,16 @@ exit 1
 	execSync('git add cool-branch.sh && git commit -m "Add failing script"', { cwd: dir });
 	const repoName = path.basename(dir);
 	const result = runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
-	assertExitCode(result, 0);
+	// Should exit with error code
+	assertExitCode(result, 1);
+	// Worktree should still be created
 	assertFileExists(path.join(base, repoName, 'feature-x'));
-	assert(result.stdout.includes('Warning') || result.stderr.includes('Warning'));
+	// Should show the error output from the script
+	assert(
+		result.stdout.includes('This is the error message') ||
+			result.stderr.includes('This is the error message'),
+		'Should show error output from failed script',
+	);
 });
 
 test('add: warns if --setup script does not exist', ({ dir, base }) => {

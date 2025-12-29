@@ -1,6 +1,6 @@
 // Test helpers for cool-branch CLI integration tests
 
-import { execSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -68,31 +68,18 @@ export interface CLIResult {
  */
 export function runCLI(args: string[], options?: { cwd?: string }): CLIResult {
 	const cliPath = path.resolve(import.meta.dirname, '..', 'dist', 'index.js');
-	const command = `node "${cliPath}" ${args.join(' ')}`;
 
-	try {
-		const stdout = execSync(command, {
-			cwd: options?.cwd,
-			encoding: 'utf-8',
-			stdio: ['pipe', 'pipe', 'pipe'],
-		});
-		return {
-			stdout,
-			stderr: '',
-			exitCode: 0,
-		};
-	} catch (error) {
-		const execError = error as {
-			stdout?: string;
-			stderr?: string;
-			status?: number;
-		};
-		return {
-			stdout: execError.stdout ?? '',
-			stderr: execError.stderr ?? '',
-			exitCode: execError.status ?? 1,
-		};
-	}
+	const result = spawnSync('node', [cliPath, ...args], {
+		cwd: options?.cwd,
+		encoding: 'utf-8',
+		stdio: ['pipe', 'pipe', 'pipe'],
+	});
+
+	return {
+		stdout: result.stdout ?? '',
+		stderr: result.stderr ?? '',
+		exitCode: result.status ?? 1,
+	};
 }
 
 /**
