@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 /**
  * Available commands
  */
-export type Command = 'list' | 'add' | 'rm' | 'dirname';
+export type Command = 'help' | 'list' | 'add' | 'rm' | 'dirname';
 
 /**
  * Parsed CLI options
@@ -35,7 +35,7 @@ const DEFAULT_BASE = path.join(process.env['HOME'] ?? '~', '.worktrees');
  */
 export function parseArgs(argv: string[]): ParsedArgs {
 	const result: ParsedArgs = {
-		command: 'list',
+		command: 'help',
 		positional: undefined,
 		base: DEFAULT_BASE,
 		force: false,
@@ -46,7 +46,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 	};
 
 	const args = [...argv];
-	const validCommands = ['add', 'rm', 'dirname'];
+	const validCommands = ['list', 'add', 'rm', 'dirname'];
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i] as string;
@@ -72,7 +72,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 			}
 		} else if (arg.startsWith('-')) {
 			// Unknown flag - ignore for now
-		} else if (validCommands.includes(arg) && result.command === 'list') {
+		} else if (validCommands.includes(arg) && result.command === 'help') {
 			// First non-flag argument that's a valid command
 			result.command = arg as Command;
 		} else if (result.positional === undefined) {
@@ -102,7 +102,8 @@ export function showHelp(): void {
 	console.log(`cool-branch - A CLI for managing git worktrees
 
 Usage:
-  cool-branch                  List worktrees and branches
+  cool-branch                  Show this help
+  cool-branch list             List worktrees and branches
   cool-branch add [options] [<branch-name>]
                                Add a new worktree
   cool-branch rm [options] [<branch-name>]

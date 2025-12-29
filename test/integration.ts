@@ -42,6 +42,14 @@ test('-h is alias for --help', () => {
 	assert(result.stdout.includes('cool-branch'));
 });
 
+test('bare command shows help', () => {
+	const result = runCLI([]);
+	assertExitCode(result, 0);
+	assert(result.stdout.includes('cool-branch'));
+	assert(result.stdout.includes('add'));
+	assert(result.stdout.includes('rm'));
+});
+
 test('unknown command shows error', () => {
 	const result = runCLI(['unknown-command']);
 	assertExitCode(result, 1);
@@ -210,14 +218,14 @@ test('dirname: add command uses custom dirname', ({ dir, base }) => {
 
 test('list: shows branches in a git repo', ({ dir, base }) => {
 	initGitRepo(dir);
-	const result = runCLI(['--base', base], { cwd: dir });
+	const result = runCLI(['list', '--base', base], { cwd: dir });
 	assertExitCode(result, 0);
 	assert(result.stdout.includes('main') || result.stdout.includes('master'));
 });
 
 test('list: marks current branch with asterisk', ({ dir, base }) => {
 	initGitRepo(dir);
-	const result = runCLI(['--base', base], { cwd: dir });
+	const result = runCLI(['list', '--base', base], { cwd: dir });
 	assertExitCode(result, 0);
 	assert(result.stdout.includes('*'));
 });
@@ -226,7 +234,7 @@ test('list: shows worktree paths for branches with worktrees', ({ dir, base }) =
 	initGitRepo(dir);
 	const worktreePath = path.join(base, 'feature-branch');
 	addWorktree(worktreePath, 'feature-branch', true, dir);
-	const result = runCLI(['--base', base], { cwd: dir });
+	const result = runCLI(['list', '--base', base], { cwd: dir });
 	assertExitCode(result, 0);
 	assert(result.stdout.includes('feature-branch'));
 	assert(result.stdout.includes(base));
@@ -235,13 +243,13 @@ test('list: shows worktree paths for branches with worktrees', ({ dir, base }) =
 test('list: shows (no worktree) for branches without worktrees', ({ dir, base }) => {
 	initGitRepo(dir);
 	execSync('git branch no-worktree-branch', { cwd: dir });
-	const result = runCLI(['--base', base], { cwd: dir });
+	const result = runCLI(['list', '--base', base], { cwd: dir });
 	assertExitCode(result, 0);
 	assert(result.stdout.includes('no worktree'));
 });
 
 test('list: errors when not in a git repo', ({ dir, base }) => {
-	const result = runCLI(['--base', base], { cwd: dir });
+	const result = runCLI(['list', '--base', base], { cwd: dir });
 	assertExitCode(result, 1);
 });
 
@@ -449,7 +457,7 @@ test('list: auto-populates cool-branch.json with repo mapping', ({ dir, base }) 
 	// Config file should not exist yet
 	assert(!fs.existsSync(path.join(base, 'cool-branch.json')));
 	// Run list command
-	runCLI(['--base', base], { cwd: dir });
+	runCLI(['list', '--base', base], { cwd: dir });
 	// Config file should now exist with the mapping
 	assertFileExists(path.join(base, 'cool-branch.json'));
 	const config = JSON.parse(fs.readFileSync(path.join(base, 'cool-branch.json'), 'utf-8'));

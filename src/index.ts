@@ -26,7 +26,7 @@ async function main(): Promise<void> {
 
 	// Check for unknown commands (first positional arg that's not a known command)
 	const rawArgs = process.argv.slice(2);
-	const validCommands = ['add', 'rm', 'dirname'];
+	const validCommands = ['list', 'add', 'rm', 'dirname'];
 	const flags = [
 		'-h',
 		'--help',
@@ -49,7 +49,7 @@ async function main(): Promise<void> {
 			continue;
 		}
 		// First non-flag argument
-		if (!validCommands.includes(arg) && args.command === 'list') {
+		if (!validCommands.includes(arg) && args.command === 'help') {
 			// This looks like an unknown command
 			console.error(`Unknown command: ${arg}`);
 			console.error('Run "cool-branch --help" for usage information.');
@@ -60,6 +60,9 @@ async function main(): Promise<void> {
 
 	// Dispatch to command handlers
 	switch (args.command) {
+		case 'help':
+			showHelp();
+			break;
 		case 'list':
 			listCommand({ base: args.base });
 			break;
