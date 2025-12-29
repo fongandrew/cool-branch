@@ -908,5 +908,119 @@ test('add: --copy-config flag overrides config.json copyConfig', ({ dir, base })
 	assertFileExists(path.join(worktreePath, '.cool-branch', 'setup.local.sh'));
 });
 
+// ============================================================================
+// Setup from Worktree Tests (p1-050)
+// ============================================================================
+
+test('add: runs setup from worktree, not main repo', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup'),
+		`#!/bin/bash
+echo "main repo" > "$1/which-setup.txt"
+`,
+		{ mode: 0o755 },
+	);
+	execSync('git add .cool-branch && git commit -m "Add setup"', { cwd: dir });
+	// Create a branch with different setup
+	execSync('git checkout -b feature-branch', { cwd: dir });
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup'),
+		`#!/bin/bash
+echo "feature branch" > "$1/which-setup.txt"
+`,
+		{ mode: 0o755 },
+	);
+	execSync('git add .cool-branch && git commit -m "Update setup"', { cwd: dir });
+	execSync('git checkout main', { cwd: dir });
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-branch', '--base', base], { cwd: dir });
+	const content = fs.readFileSync(
+		path.join(base, repoName, 'feature-branch', 'which-setup.txt'),
+		'utf-8',
+	);
+	assert(content.includes('feature branch'), 'Should run setup from worktree branch');
+});
+
+test('add: no setup runs if worktree branch has no setup script', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup'),
+		`#!/bin/bash
+echo "setup ran" > "$1/setup-marker.txt"
+`,
+		{ mode: 0o755 },
+	);
+	execSync('git add .cool-branch && git commit -m "Add setup"', { cwd: dir });
+	// Create a branch without setup
+	execSync('git checkout -b no-setup-branch', { cwd: dir });
+	fs.rmSync(path.join(dir, '.cool-branch'), { recursive: true });
+	execSync('git add -A && git commit -m "Remove setup"', { cwd: dir });
+	execSync('git checkout main', { cwd: dir });
+	const repoName = path.basename(dir);
+	const result = runCLI(['add', 'no-setup-branch', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	// Setup marker should NOT exist
+	assert(!fs.existsSync(path.join(base, repoName, 'no-setup-branch', 'setup-marker.txt')));
+});
+
+test('add: runs copied local setup from worktree', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'));
+	// Only a local setup (not in git)
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'setup.local'),
+		`#!/bin/bash
+echo "local setup ran" > "$1/setup-marker.txt"
+`,
+		{ mode: 0o755 },
+	);
+	execSync('git add .cool-branch && git commit --allow-empty -m "Add dir"', { cwd: dir });
+	const repoName = path.basename(dir);
+	// Default copy mode copies local files
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
+});
+
+test('add: --setup flag still works with explicit path', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.writeFileSync(
+		path.join(dir, 'custom-setup.sh'),
+		`#!/bin/bash
+echo "custom" > "$1/setup-marker.txt"
+`,
+		{ mode: 0o755 },
+	);
+	execSync('git add custom-setup.sh && git commit -m "Add custom setup"', { cwd: dir });
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base, '--setup', 'custom-setup.sh'], { cwd: dir });
+	assertFileExists(path.join(base, repoName, 'feature-x', 'setup-marker.txt'));
+});
+
+test('add: legacy cool-branch.sh in main repo does not run if not in worktree', ({ dir, base }) => {
+	initGitRepo(dir);
+	// Legacy setup only in main, not on branch
+	fs.writeFileSync(
+		path.join(dir, 'cool-branch.sh'),
+		`#!/bin/bash
+echo "legacy ran" > "$1/setup-marker.txt"
+`,
+		{ mode: 0o755 },
+	);
+	execSync('git add cool-branch.sh && git commit -m "Add legacy setup"', { cwd: dir });
+	// Create branch without the script
+	execSync('git checkout -b no-legacy-branch', { cwd: dir });
+	fs.unlinkSync(path.join(dir, 'cool-branch.sh'));
+	execSync('git add -A && git commit -m "Remove legacy setup"', { cwd: dir });
+	execSync('git checkout main', { cwd: dir });
+	const repoName = path.basename(dir);
+	const result = runCLI(['add', 'no-legacy-branch', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	// Legacy setup should NOT have run
+	assert(!fs.existsSync(path.join(base, repoName, 'no-legacy-branch', 'setup-marker.txt')));
+});
+
 // Run all tests
 runTests();

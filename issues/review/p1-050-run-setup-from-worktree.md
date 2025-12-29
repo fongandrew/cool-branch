@@ -144,3 +144,21 @@ echo "legacy ran" > "$1/setup-marker.txt"
 ## Notes
 
 This issue depends on p1-040 (copy behavior) being completed first. The setup script execution happens AFTER the copy step.
+
+---
+
+@claude: I have implemented the setup script behavior change so that scripts run from the worktree instead of the main repo.
+
+Here is a summary of the work I have done:
+- Added 5 new tests to `test/integration.ts` covering all the new behavior requirements
+- Modified `src/commands/add.ts` to look for setup scripts in the worktree (`targetPath`) instead of the main repo (`repoRoot`) after the copy step
+- The `--setup` flag continues to work with paths relative to the main repo (unchanged)
+- Branch-specific setup scripts are now supported (different branches can have different setup scripts)
+- Local setup scripts (`.local` variants) that are copied to the worktree are now executed
+- If a branch has no setup script (`.cool-branch/setup` or legacy `cool-branch.sh`), no setup runs
+
+Verification checklist:
+- [x] All new tests pass (5 new tests)
+- [x] All existing tests still pass (75 total, 0 failures)
+- [x] `pnpm run lint:fix` passes
+- [x] `pnpm run typecheck` passes

@@ -343,12 +343,13 @@ export function addCommand(options: AddOptions): void {
 		let isExplicitScript = false;
 
 		if (options.setup) {
-			// Custom script specified via --setup
+			// Custom script specified via --setup (relative to main repo or absolute)
 			scriptPath = path.resolve(repoRoot, options.setup);
 			isExplicitScript = true;
 		} else {
-			// Look for cool-branch.* (any extension) in repo root
-			scriptPath = findSetupScript(repoRoot);
+			// Look for setup script in the WORKTREE (not the main repo)
+			// This allows branch-specific setup scripts and uses copied local scripts
+			scriptPath = findSetupScript(targetPath);
 		}
 
 		if (scriptPath) {
