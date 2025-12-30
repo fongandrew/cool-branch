@@ -9,7 +9,7 @@ import { getRepoRoot } from '../git';
 /**
  * Supported config keys
  */
-export type ConfigKey = 'dirname' | 'base' | 'copyConfig';
+export type ConfigKey = 'dirname' | 'base' | 'copyConfig' | 'remote';
 
 /**
  * Valid copyConfig values

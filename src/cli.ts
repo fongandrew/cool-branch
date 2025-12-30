@@ -37,6 +37,7 @@ export interface ParsedArgs {
 	noSetup: boolean;
 	copyConfig: CopyConfigMode | undefined; // undefined means use config file or default
 	config: string | undefined; // path to custom config file or directory
+	remote: string | undefined; // custom remote name (default: origin)
 	local: boolean; // for config --local
 	unset: boolean; // for config --unset
 	edit: boolean; // for setup --edit and init --edit
@@ -67,6 +68,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 		noSetup: false,
 		copyConfig: undefined,
 		config: undefined,
+		remote: undefined,
 		local: false,
 		unset: false,
 		edit: false,
@@ -113,6 +115,11 @@ export function parseArgs(argv: string[]): ParsedArgs {
 			i++;
 			if (i < args.length) {
 				result.config = args[i] as string;
+			}
+		} else if (arg === '--remote') {
+			i++;
+			if (i < args.length) {
+				result.remote = args[i] as string;
 			}
 		} else if (arg === '--local') {
 			result.local = true;
@@ -178,6 +185,7 @@ If no branch name is provided, runs in interactive mode.
 Options:
   --base <path>     Base directory for worktrees (default: ~/.worktrees)
   --config <path>   Path to config file or directory containing config.json
+  --remote <name>   Remote name to fetch from (default: origin)
   -f, --force       Force creation even if branch exists
   --setup <script>  Path to post-setup script to run after creation
   --no-setup        Skip running the post-setup script
@@ -253,6 +261,7 @@ Config Keys:
   dirname           Directory name pattern for worktrees
   base              Default base directory for worktrees
   setup             Path to post-setup script
+  remote            Remote name to fetch from (default: origin)
 `);
 			break;
 

@@ -48,6 +48,7 @@ async function main(): Promise<void> {
 		'--setup',
 		'--copy-config',
 		'--config',
+		'--remote',
 		'--local',
 		'--unset',
 		'--edit',
@@ -62,7 +63,8 @@ async function main(): Promise<void> {
 				arg === '--base' ||
 				arg === '--setup' ||
 				arg === '--copy-config' ||
-				arg === '--config'
+				arg === '--config' ||
+				arg === '--remote'
 			) {
 				i++; // Skip the next argument (value)
 			}
@@ -97,6 +99,9 @@ async function main(): Promise<void> {
 	// Get local dirname (from custom config or local config)
 	const localDirname = localConfig.dirname;
 
+	// Determine effective remote: CLI flag > config > default 'origin'
+	const effectiveRemote = args.remote ?? localConfig.remote ?? 'origin';
+
 	// Dispatch to command handlers
 	switch (args.command) {
 		case 'help':
@@ -114,6 +119,7 @@ async function main(): Promise<void> {
 				await interactiveAddCommand({
 					base: effectiveBase,
 					localDirname,
+					remote: effectiveRemote,
 					setup: args.setup,
 					noSetup: args.noSetup,
 					copyConfig: args.copyConfig,
@@ -123,6 +129,7 @@ async function main(): Promise<void> {
 					base: effectiveBase,
 					localDirname,
 					branchName: args.positional,
+					remote: effectiveRemote,
 					force: args.force,
 					setup: args.setup,
 					noSetup: args.noSetup,

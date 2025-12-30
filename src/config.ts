@@ -20,6 +20,7 @@ export interface LocalConfig {
 	base?: string;
 	dirname?: string;
 	copyConfig?: CopyConfigMode;
+	remote?: string;
 }
 
 /**
@@ -49,6 +50,9 @@ function parseLocalConfigFile(configPath: string): LocalConfig {
 			parsed.copyConfig === 'local'
 		) {
 			result.copyConfig = parsed.copyConfig;
+		}
+		if (typeof parsed.remote === 'string') {
+			result.remote = parsed.remote;
 		}
 		return result;
 	} catch {

@@ -1099,6 +1099,18 @@ test('config: validates copyConfig values', ({ dir, base }) => {
 	assert(result.stderr.includes('invalid') || result.stderr.includes('must be'));
 });
 
+test('config: set and get remote value', ({ dir, base }) => {
+	initGitRepo(dir);
+	// Set remote
+	const setResult = runCLI(['config', 'remote', 'upstream', '--base', base], { cwd: dir });
+	assertExitCode(setResult, 0);
+	assert(setResult.stdout.includes('remote=upstream'));
+	// Get remote
+	const getResult = runCLI(['config', 'remote', '--base', base], { cwd: dir });
+	assertExitCode(getResult, 0);
+	assert(getResult.stdout.includes('upstream'));
+});
+
 // Dirname deprecation test
 test('dirname: shows deprecation warning', ({ dir, base }) => {
 	initGitRepo(dir);
@@ -1120,12 +1132,13 @@ test('init: creates .cool-branch directory and config.json', ({ dir, base }) => 
 	const result = runCLI(['init', '--base', base], { cwd: dir });
 	assertExitCode(result, 0);
 	assertFileExists(path.join(dir, '.cool-branch', 'config.json'));
-	// Should be valid JSON with only copyConfig (no empty dirname/base)
+	// Should be valid JSON with copyConfig and remote (no empty dirname/base)
 	const config = JSON.parse(
 		fs.readFileSync(path.join(dir, '.cool-branch', 'config.json'), 'utf-8'),
 	);
 	assert(typeof config === 'object');
 	assert.strictEqual(config.copyConfig, 'local', 'Should have copyConfig');
+	assert.strictEqual(config.remote, 'origin', 'Should have remote');
 	assert(!('dirname' in config), 'Should not have dirname key');
 	assert(!('base' in config), 'Should not have base key');
 });

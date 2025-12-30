@@ -29,6 +29,7 @@ export interface AddOptions {
 	base: string;
 	localDirname?: string | undefined;
 	branchName: string;
+	remote: string;
 	force: boolean;
 	setup: string | undefined;
 	noSetup: boolean;
@@ -265,7 +266,7 @@ export function addCommand(options: AddOptions): void {
 	runGit(['worktree', 'prune']);
 
 	// Fetch from remote (ignore errors if no remote exists)
-	runGit(['fetch', 'origin']);
+	runGit(['fetch', options.remote]);
 
 	// Check if branch exists locally
 	const localExists = branchExists(options.branchName);
@@ -275,7 +276,7 @@ export function addCommand(options: AddOptions): void {
 		'show-ref',
 		'--verify',
 		'--quiet',
-		`refs/remotes/origin/${options.branchName}`,
+		`refs/remotes/${options.remote}/${options.branchName}`,
 	]);
 	const remoteExists = remoteResult.exitCode === 0;
 
@@ -349,6 +350,7 @@ export function addCommand(options: AddOptions): void {
 export interface InteractiveAddOptions {
 	base: string;
 	localDirname?: string | undefined;
+	remote: string;
 	setup: string | undefined;
 	noSetup: boolean;
 	copyConfig?: CopyConfigMode | undefined;
@@ -443,6 +445,7 @@ export async function interactiveAddCommand(options: InteractiveAddOptions): Pro
 		base: options.base,
 		localDirname: options.localDirname,
 		branchName,
+		remote: options.remote,
 		force,
 		setup: options.setup,
 		noSetup: options.noSetup,

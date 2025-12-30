@@ -12,6 +12,7 @@ import { getRepoRoot } from '../git';
  */
 const CONFIG_TEMPLATE = {
 	copyConfig: 'local',
+	remote: 'origin',
 };
 
 /**
