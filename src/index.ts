@@ -16,21 +16,26 @@ import { loadCustomConfig, readLocalConfig } from './config';
 async function main(): Promise<void> {
 	const args = parseArgs(process.argv.slice(2));
 
-	// Handle help flag
+	// Handle help flag - show subcommand-specific help if applicable
 	if (args.help) {
-		showHelp();
+		showHelp(args.command !== 'help' ? args.command : undefined);
 		process.exit(0);
 	}
 
-	// Handle version flag
+	// Handle version flag - only valid at base level (no subcommand)
 	if (args.version) {
+		if (args.command !== 'help') {
+			console.error(`Unknown option: --version`);
+			console.error(`Run "cool-branch ${args.command} --help" for usage information.`);
+			process.exit(1);
+		}
 		showVersion();
 		process.exit(0);
 	}
 
 	// Check for unknown commands (first positional arg that's not a known command)
 	const rawArgs = process.argv.slice(2);
-	const validCommands = ['list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'];
+	const validCommands = ['version', 'list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'];
 	const flags = [
 		'-h',
 		'--help',
@@ -96,6 +101,9 @@ async function main(): Promise<void> {
 	switch (args.command) {
 		case 'help':
 			showHelp();
+			break;
+		case 'version':
+			showVersion();
 			break;
 		case 'list':
 			listCommand({ base: effectiveBase, localDirname });

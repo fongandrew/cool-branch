@@ -7,7 +7,16 @@ declare const __VERSION__: string;
 /**
  * Available commands
  */
-export type Command = 'help' | 'list' | 'add' | 'rm' | 'dirname' | 'config' | 'init' | 'setup';
+export type Command =
+	| 'help'
+	| 'version'
+	| 'list'
+	| 'add'
+	| 'rm'
+	| 'dirname'
+	| 'config'
+	| 'init'
+	| 'setup';
 
 /**
  * Copy config modes for .cool-branch directory
@@ -67,7 +76,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 	};
 
 	const args = [...argv];
-	const validCommands = ['list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'];
+	const validCommands = ['version', 'list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'];
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i] as string;
@@ -138,47 +147,150 @@ export function getVersion(): string {
 }
 
 /**
- * Display help message
+ * Display help message for a specific command or general help
  */
-export function showHelp(): void {
-	console.log(`cool-branch - A CLI for managing git worktrees
+export function showHelp(command?: Command): void {
+	switch (command) {
+		case 'list':
+			console.log(`cool-branch list - List worktrees and branches
 
 Usage:
-  cool-branch                  Show this help
-  cool-branch list             List worktrees and branches
-  cool-branch add [options] [<branch-name>]
-                               Add a new worktree
-  cool-branch rm [options] [<branch-name>]
-                               Remove a worktree
-  cool-branch init [options]   Initialize .cool-branch directory
-  cool-branch setup [options]  View or manage setup scripts
-  cool-branch dirname [<folder-name>]
-                               Get or set dirname (deprecated, use config)
-  cool-branch config           List all config values
-  cool-branch config <key>     Get a config value
-  cool-branch config <key> <value>
-                               Set a config value
-  cool-branch config --unset <key>
-                               Remove a config key
-  cool-branch config --local <key> <value>
-                               Set a config value in config.local.json
+  cool-branch list [options]
 
 Options:
   --base <path>     Base directory for worktrees (default: ~/.worktrees)
   --config <path>   Path to config file or directory containing config.json
-  -f, --force       Force operation
-  --setup <script>  Path to post-setup script (add only)
-  --no-setup        Skip running the post-setup script (add only)
-  --copy-config <mode>
-                    Copy .cool-branch directory to new worktree (add only)
-                    Modes: all, none, local (default: local)
-  --local           (config/setup) Target local variant
-  --edit            (setup/init) Open file in editor
-  --path            (setup) Print only the path
-  --unset           (config) Remove a key from config
-  -h, --help        Show help
-  -v, --version     Show version
+  -h, --help        Show this help
 `);
+			break;
+
+		case 'add':
+			console.log(`cool-branch add - Add a new worktree
+
+Usage:
+  cool-branch add [options] [<branch-name>]
+
+If no branch name is provided, runs in interactive mode.
+
+Options:
+  --base <path>     Base directory for worktrees (default: ~/.worktrees)
+  --config <path>   Path to config file or directory containing config.json
+  -f, --force       Force creation even if branch exists
+  --setup <script>  Path to post-setup script to run after creation
+  --no-setup        Skip running the post-setup script
+  --copy-config <mode>
+                    Copy .cool-branch directory to new worktree
+                    Modes: all, none, local (default: local)
+  -h, --help        Show this help
+`);
+			break;
+
+		case 'rm':
+			console.log(`cool-branch rm - Remove a worktree
+
+Usage:
+  cool-branch rm [options] [<branch-name>]
+
+If no branch name is provided, runs in interactive mode.
+
+Options:
+  --base <path>     Base directory for worktrees (default: ~/.worktrees)
+  --config <path>   Path to config file or directory containing config.json
+  -f, --force       Force removal even if worktree has changes
+  -h, --help        Show this help
+`);
+			break;
+
+		case 'init':
+			console.log(`cool-branch init - Initialize .cool-branch directory
+
+Usage:
+  cool-branch init [options]
+
+Creates a .cool-branch directory with config.json in the current directory.
+
+Options:
+  --local           Create config.local.json instead of config.json
+  -f, --force       Overwrite existing config file
+  --edit            Open the config file in your editor after creation
+  -h, --help        Show this help
+`);
+			break;
+
+		case 'setup':
+			console.log(`cool-branch setup - View or manage setup scripts
+
+Usage:
+  cool-branch setup [options]
+
+Options:
+  --local           Target setup.local.sh instead of setup.sh
+  --edit            Open the setup script in your editor
+  --path            Print only the path to the setup script
+  -h, --help        Show this help
+`);
+			break;
+
+		case 'config':
+			console.log(`cool-branch config - View or modify configuration
+
+Usage:
+  cool-branch config [options]           List all config values
+  cool-branch config <key>               Get a config value
+  cool-branch config <key> <value>       Set a config value
+  cool-branch config --unset <key>       Remove a config key
+
+Options:
+  --base <path>     Base directory for worktrees (default: ~/.worktrees)
+  --local           Target config.local.json instead of config.json
+  --unset           Remove a key from config
+  -h, --help        Show this help
+
+Config Keys:
+  dirname           Directory name pattern for worktrees
+  base              Default base directory for worktrees
+  setup             Path to post-setup script
+`);
+			break;
+
+		case 'dirname':
+			console.log(`cool-branch dirname - Get or set dirname (DEPRECATED)
+
+Usage:
+  cool-branch dirname [<folder-name>]
+
+This command is deprecated. Use "cool-branch config dirname" instead.
+
+Options:
+  --base <path>     Base directory for worktrees (default: ~/.worktrees)
+  -h, --help        Show this help
+`);
+			break;
+
+		default:
+			console.log(`cool-branch - A CLI for managing git worktrees
+
+Usage:
+  cool-branch <command> [options]
+
+Commands:
+  list              List worktrees and branches
+  add               Add a new worktree
+  rm                Remove a worktree
+  init              Initialize .cool-branch directory
+  setup             View or manage setup scripts
+  config            View or modify configuration
+  version           Show version
+
+Run "cool-branch <command> --help" for more information on a specific command.
+
+Global Options:
+  --base <path>     Base directory for worktrees (default: ~/.worktrees)
+  --config <path>   Path to config file or directory containing config.json
+  -h, --help        Show help
+`);
+			break;
+	}
 }
 
 /**
@@ -192,5 +304,5 @@ export function showVersion(): void {
  * Check if a command is valid
  */
 export function isValidCommand(cmd: string): boolean {
-	return ['list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'].includes(cmd);
+	return ['version', 'list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'].includes(cmd);
 }

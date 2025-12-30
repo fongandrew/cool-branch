@@ -1120,11 +1120,14 @@ test('init: creates .cool-branch directory and config.json', ({ dir, base }) => 
 	const result = runCLI(['init', '--base', base], { cwd: dir });
 	assertExitCode(result, 0);
 	assertFileExists(path.join(dir, '.cool-branch', 'config.json'));
-	// Should be valid JSON
+	// Should be valid JSON with only copyConfig (no empty dirname/base)
 	const config = JSON.parse(
 		fs.readFileSync(path.join(dir, '.cool-branch', 'config.json'), 'utf-8'),
 	);
 	assert(typeof config === 'object');
+	assert.strictEqual(config.copyConfig, 'local', 'Should have copyConfig');
+	assert(!('dirname' in config), 'Should not have dirname key');
+	assert(!('base' in config), 'Should not have base key');
 });
 
 test('init: --local creates config.local.json', ({ dir, base }) => {

@@ -11,8 +11,6 @@ import { getRepoRoot } from '../git';
  * Config template for init command
  */
 const CONFIG_TEMPLATE = {
-	dirname: '',
-	base: '',
 	copyConfig: 'local',
 };
 
