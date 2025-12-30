@@ -12,84 +12,177 @@ npm install -g cool-branch
 npx cool-branch
 ```
 
-## Usage
+## Quick Start
 
 ```bash
-cool-branch                  # List worktrees and branches
-cool-branch add [branch]     # Create a worktree
-cool-branch rm [branch]      # Remove a worktree
-cool-branch dirname [name]   # View/set repo folder name
+cool-branch list             # List worktrees and branches
+cool-branch add feature-x    # Create a worktree for a branch
+cool-branch rm feature-x     # Remove a worktree and its branch
 ```
 
-### Options
+Run commands without arguments for interactive mode:
 
+```bash
+cool-branch add              # Select from existing branches or enter a new name
+cool-branch rm               # Select a worktree to remove
 ```
---base <path>     Base directory for worktrees (default: ~/.worktrees)
--f, --force       Force operation
---setup <script>  Path to post-setup script (add only)
---no-setup        Skip running the post-setup script (add only)
--h, --help        Show help
--v, --version     Show version
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `list` | List all branches and their worktree status |
+| `add [branch]` | Create a new worktree (interactive if no branch given) |
+| `rm [branch]` | Remove a worktree and delete the branch (interactive if no branch given) |
+| `init` | Initialize `.cool-branch` directory with config template |
+| `setup` | View or manage setup scripts |
+| `config` | View or modify configuration |
+| `version` | Show version |
+
+Run `cool-branch <command> --help` for detailed help on any command.
+
+## Configuration
+
+Configuration is stored in `.cool-branch/config.json` in your repository root. Initialize it with:
+
+```bash
+cool-branch init
 ```
+
+This creates a config file with sensible defaults. Edit configuration with:
+
+```bash
+cool-branch config                     # List all config values
+cool-branch config <key>               # Get a value
+cool-branch config <key> <value>       # Set a value
+cool-branch config --unset <key>       # Remove a key
+```
+
+### Config Keys
+
+| Key | Description | Default |
+|-----|-------------|---------|
+| `dirname` | Directory name for this repo's worktrees | Repository name |
+| `base` | Base directory for all worktrees | `~/.worktrees` |
+| `remote` | Remote name to fetch from | `origin` |
+| `copyConfig` | Copy mode for `.cool-branch` directory | `local` |
+
+### Local Overrides
+
+Create `.cool-branch/config.local.json` for machine-specific settings that shouldn't be committed:
+
+```bash
+cool-branch init --local
+cool-branch config --local base /custom/path
+```
+
+Local config values override the base config.
+
+## Setup Scripts
+
+Setup scripts run automatically after creating a worktree. They execute from inside the new worktree directory and receive the original repository path as `$1`.
+
+### Creating a Setup Script
+
+```bash
+cool-branch setup --edit
+```
+
+This creates `.cool-branch/setup` (or opens an existing one) in your editor.
+
+Example setup script:
+
+```bash
+#!/bin/bash
+ORIGINAL_DIR="$1"
+
+# Install dependencies
+npm install
+
+# Copy environment file from original repo
+cp "$ORIGINAL_DIR/.env" .env
+
+echo "Setup complete for $(pwd)"
+```
+
+### Local Setup Scripts
+
+Create `.cool-branch/setup.local` for machine-specific setup that shouldn't be committed:
+
+```bash
+cool-branch setup --local --edit
+```
+
+Local setup scripts take precedence over regular setup scripts.
+
+### Controlling Setup Behavior
+
+```bash
+cool-branch add feature-x --no-setup          # Skip setup script
+cool-branch add feature-x --setup ./custom.sh # Use custom script
+```
+
+## Directory Structure
+
+Worktrees are organized as: `<base>/<repo-name>/<branch-name>`
+
+Default: `~/.worktrees/<repo-name>/<branch-name>`
+
+The repo name is derived from the git remote URL or repository path. Customize it with:
+
+```bash
+cool-branch config dirname my-custom-name
+```
+
+## Options
+
+### Global Options
+
+| Option | Description |
+|--------|-------------|
+| `--base <path>` | Base directory for worktrees (default: `~/.worktrees`) |
+| `--config <path>` | Path to custom config file or directory |
+| `-h, --help` | Show help |
+
+### Add Options
+
+| Option | Description |
+|--------|-------------|
+| `--remote <name>` | Remote name to fetch from (default: `origin`) |
+| `-f, --force` | Force creation even if directory exists |
+| `--setup <script>` | Path to custom setup script |
+| `--no-setup` | Skip running the setup script |
+| `--copy-config <mode>` | Copy `.cool-branch` directory: `all`, `none`, `local` (default: `local`) |
+
+### Remove Options
+
+| Option | Description |
+|--------|-------------|
+| `-f, --force` | Force removal even with uncommitted changes |
 
 ## Examples
 
 ### List branches and worktrees
 
 ```bash
-$ cool-branch
+$ cool-branch list
 Branches:
   feature-a    ~/.worktrees/my-project/feature-a
   feature-b    (no worktree)
 * main         /Users/dev/my-project (main worktree)
 ```
 
-### Create a worktree
+### Create a worktree with custom remote
 
 ```bash
-# Create worktree for existing or new branch
-$ cool-branch add feature-x
-Worktree created at: ~/.worktrees/my-project/feature-x
+$ cool-branch add feature-x --remote upstream
 ```
 
-### Remove a worktree
+### Use a shared config across projects
 
 ```bash
-$ cool-branch rm feature-x
-Worktree and branch 'feature-x' removed
-
-# Force remove with uncommitted changes
-$ cool-branch rm -f feature-x
+$ cool-branch add feature-x --config ~/my-shared-config.json
 ```
-
-### Set custom folder name
-
-```bash
-$ cool-branch dirname my-custom-name
-Folder name set to: my-custom-name
-Worktrees will be created at: ~/.worktrees/my-custom-name/
-```
-
-## Post-Setup Scripts
-
-Add a `.cool-branch-setup` file to your repo root to run commands after worktree creation:
-
-```bash
-#!/bin/bash
-set -e
-pnpm install
-pnpm run build
-```
-
-The script receives the worktree path as `$1` and runs with the worktree as the working directory.
-
-Skip with `--no-setup` or use a custom script with `--setup <path>`.
-
-## Directory Structure
-
-Worktrees are organized as: `~/.worktrees/<repo-name>/<branch-name>`
-
-The repo name is derived from the git origin URL or repo path. Use `cool-branch dirname` to customize the folder name for a repository.
 
 ## License
 
