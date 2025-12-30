@@ -9,6 +9,10 @@ dist/
 .env
 .env.local
 
+# Local config
+*.local
+*.local.*
+
 # IDE
 .vscode/
 .idea/
