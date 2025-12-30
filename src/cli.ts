@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 /**
  * Available commands
  */
-export type Command = 'help' | 'list' | 'add' | 'rm' | 'dirname' | 'config' | 'init';
+export type Command = 'help' | 'list' | 'add' | 'rm' | 'dirname' | 'config' | 'init' | 'setup';
 
 /**
  * Copy config modes for .cool-branch directory
@@ -30,6 +30,8 @@ export interface ParsedArgs {
 	config: string | undefined; // path to custom config file or directory
 	local: boolean; // for config --local
 	unset: boolean; // for config --unset
+	edit: boolean; // for setup --edit and init --edit
+	pathOnly: boolean; // for setup --path
 	help: boolean;
 	version: boolean;
 }
@@ -58,12 +60,14 @@ export function parseArgs(argv: string[]): ParsedArgs {
 		config: undefined,
 		local: false,
 		unset: false,
+		edit: false,
+		pathOnly: false,
 		help: false,
 		version: false,
 	};
 
 	const args = [...argv];
-	const validCommands = ['list', 'add', 'rm', 'dirname', 'config', 'init'];
+	const validCommands = ['list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'];
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i] as string;
@@ -105,6 +109,10 @@ export function parseArgs(argv: string[]): ParsedArgs {
 			result.local = true;
 		} else if (arg === '--unset') {
 			result.unset = true;
+		} else if (arg === '--edit') {
+			result.edit = true;
+		} else if (arg === '--path') {
+			result.pathOnly = true;
 		} else if (arg.startsWith('-')) {
 			// Unknown flag - ignore for now
 		} else if (validCommands.includes(arg) && result.command === 'help') {
@@ -147,6 +155,7 @@ Usage:
   cool-branch rm [options] [<branch-name>]
                                Remove a worktree
   cool-branch init [options]   Initialize .cool-branch directory
+  cool-branch setup [options]  View or manage setup scripts
   cool-branch dirname [<folder-name>]
                                Get or set dirname (deprecated, use config)
   cool-branch config           List all config values
@@ -167,7 +176,9 @@ Options:
   --copy-config <mode>
                     Copy .cool-branch directory to new worktree (add only)
                     Modes: all, none, local (default: local)
-  --local           (config) Use config.local.json instead of config.json
+  --local           (config/setup) Target local variant
+  --edit            (setup/init) Open file in editor
+  --path            (setup) Print only the path
   --unset           (config) Remove a key from config
   -h, --help        Show help
   -v, --version     Show version
@@ -185,5 +196,5 @@ export function showVersion(): void {
  * Check if a command is valid
  */
 export function isValidCommand(cmd: string): boolean {
-	return ['list', 'add', 'rm', 'dirname', 'config', 'init'].includes(cmd);
+	return ['list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'].includes(cmd);
 }

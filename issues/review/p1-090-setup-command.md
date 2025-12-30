@@ -156,3 +156,29 @@ test('setup: errors when not in git repo', ({ dir, base }) => {
 ## Notes
 
 Testing `--edit` with actual editor interaction is difficult. The test uses `EDITOR=true` to simulate an editor that immediately exits. Manual testing should verify actual editor behavior.
+
+---
+
+@claude: I have implemented the `cool-branch setup` command to view and manage setup scripts.
+
+Here is a summary of the work I have done:
+- Created `src/commands/setup.ts` with the full setup command implementation
+- Added `setup` command to CLI command type and valid commands list in `cli.ts`
+- Added `--edit` and `--path` flags to CLI argument parsing
+- Updated help text to include the new setup command and its options
+- Connected the setup command in `index.ts` main dispatcher
+- Updated `test/helpers.ts` to support passing environment variables to `runCLI`
+- Added all 8 tests from the TDD Approach section to `test/integration.ts`
+
+The setup command implements:
+- `cool-branch setup` - Shows which setup script would run and its path
+- `cool-branch setup --local` - Shows local setup script info only
+- `cool-branch setup --path` - Prints only the path (exits 1 if none exists)
+- `cool-branch setup --edit` - Opens setup script in editor (creates with template if missing)
+- `cool-branch setup --local --edit` - Opens/creates setup.local in editor
+
+Verification:
+- [x] All new tests pass (8 setup command tests)
+- [x] All existing tests still pass (98 total tests, 0 failures)
+- [x] `pnpm run lint:fix` passes
+- [x] `pnpm run typecheck` passes

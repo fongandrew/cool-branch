@@ -7,6 +7,7 @@ import { dirnameCommand } from './commands/dirname';
 import { initCommand } from './commands/init';
 import { listCommand } from './commands/list';
 import { interactiveRemoveCommand, removeCommand } from './commands/remove';
+import { setupCommand } from './commands/setup';
 import { loadCustomConfig, readLocalConfig } from './config';
 
 /**
@@ -29,7 +30,7 @@ async function main(): Promise<void> {
 
 	// Check for unknown commands (first positional arg that's not a known command)
 	const rawArgs = process.argv.slice(2);
-	const validCommands = ['list', 'add', 'rm', 'dirname', 'config', 'init'];
+	const validCommands = ['list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'];
 	const flags = [
 		'-h',
 		'--help',
@@ -44,6 +45,8 @@ async function main(): Promise<void> {
 		'--config',
 		'--local',
 		'--unset',
+		'--edit',
+		'--path',
 	];
 
 	for (let i = 0; i < rawArgs.length; i++) {
@@ -158,7 +161,14 @@ async function main(): Promise<void> {
 			initCommand({
 				local: args.local,
 				force: args.force,
-				edit: false, // TODO: Add --edit flag support
+				edit: args.edit,
+			});
+			break;
+		case 'setup':
+			setupCommand({
+				local: args.local,
+				edit: args.edit,
+				pathOnly: args.pathOnly,
 			});
 			break;
 	}

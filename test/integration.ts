@@ -1179,5 +1179,92 @@ test('init: prints path to created file', ({ dir, base }) => {
 	assert(result.stdout.includes('.cool-branch') && result.stdout.includes('config.json'));
 });
 
+// ============================================================================
+// Setup Command Tests
+// ============================================================================
+
+test('setup: shows no setup script message when none exists', ({ dir, base }) => {
+	initGitRepo(dir);
+	const result = runCLI(['setup', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assert(result.stdout.includes('No setup script') || result.stdout.includes('not found'));
+});
+
+test('setup: shows setup script path when exists', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'), { recursive: true });
+	fs.writeFileSync(path.join(dir, '.cool-branch', 'setup'), '#!/bin/bash\necho hi', {
+		mode: 0o755,
+	});
+	const result = runCLI(['setup', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assert(result.stdout.includes('.cool-branch'));
+	assert(result.stdout.includes('setup'));
+});
+
+test('setup: shows local setup when it exists', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'), { recursive: true });
+	fs.writeFileSync(path.join(dir, '.cool-branch', 'setup'), '#!/bin/bash\necho regular', {
+		mode: 0o755,
+	});
+	fs.writeFileSync(path.join(dir, '.cool-branch', 'setup.local'), '#!/bin/bash\necho local', {
+		mode: 0o755,
+	});
+	const result = runCLI(['setup', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	// Should show that local script will be used
+	assert(result.stdout.includes('setup.local') || result.stdout.includes('local'));
+});
+
+test('setup: --local shows only local setup info', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'), { recursive: true });
+	fs.writeFileSync(path.join(dir, '.cool-branch', 'setup'), '#!/bin/bash\necho regular', {
+		mode: 0o755,
+	});
+	const result = runCLI(['setup', '--local', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assert(result.stdout.includes('No local') || result.stdout.includes('not found'));
+});
+
+test('setup: --path prints only the path', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'), { recursive: true });
+	fs.writeFileSync(path.join(dir, '.cool-branch', 'setup.sh'), '#!/bin/bash\necho hi', {
+		mode: 0o755,
+	});
+	const result = runCLI(['setup', '--path', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	// Should be just the path, no extra text
+	const output = result.stdout.trim();
+	assert(output.endsWith('setup.sh'));
+	assert(!output.includes(' ')); // No spaces = just the path
+});
+
+test('setup: --path exits 1 when no setup exists', ({ dir, base }) => {
+	initGitRepo(dir);
+	const result = runCLI(['setup', '--path', '--base', base], { cwd: dir });
+	assertExitCode(result, 1);
+});
+
+test('setup: --edit creates setup script if missing', ({ dir, base }) => {
+	initGitRepo(dir);
+	// Use a non-interactive "editor" that just exits
+	runCLI(['setup', '--edit', '--base', base], {
+		cwd: dir,
+		env: { ...process.env, EDITOR: 'true' }, // 'true' command just exits 0
+	});
+	// The script should be created even if editor "fails"
+	assertFileExists(path.join(dir, '.cool-branch', 'setup'));
+	const content = fs.readFileSync(path.join(dir, '.cool-branch', 'setup'), 'utf-8');
+	assert(content.includes('#!/bin/bash'));
+});
+
+test('setup: errors when not in git repo', ({ dir, base }) => {
+	const result = runCLI(['setup', '--base', base], { cwd: dir });
+	assertExitCode(result, 1);
+});
+
 // Run all tests
 runTests();

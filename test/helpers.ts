@@ -63,14 +63,18 @@ export interface CLIResult {
 /**
  * Run the built CLI with given arguments
  * @param args Command line arguments
- * @param options Optional settings (cwd: working directory)
+ * @param options Optional settings (cwd: working directory, env: environment variables)
  * @returns Object with stdout, stderr, and exitCode
  */
-export function runCLI(args: string[], options?: { cwd?: string }): CLIResult {
+export function runCLI(
+	args: string[],
+	options?: { cwd?: string; env?: NodeJS.ProcessEnv },
+): CLIResult {
 	const cliPath = path.resolve(import.meta.dirname, '..', 'dist', 'index.js');
 
 	const result = spawnSync('node', [cliPath, ...args], {
 		cwd: options?.cwd,
+		env: options?.env ?? process.env,
 		encoding: 'utf-8',
 		stdio: ['pipe', 'pipe', 'pipe'],
 	});
