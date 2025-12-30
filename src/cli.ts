@@ -143,6 +143,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
  * Get version (injected at build time)
  */
 export function getVersion(): string {
+	if (typeof __VERSION__ !== 'string') {
+		return 'dev';
+	}
 	return __VERSION__;
 }
 
