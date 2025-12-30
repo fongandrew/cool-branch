@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 /**
  * Available commands
  */
-export type Command = 'help' | 'list' | 'add' | 'rm' | 'dirname' | 'config';
+export type Command = 'help' | 'list' | 'add' | 'rm' | 'dirname' | 'config' | 'init';
 
 /**
  * Copy config modes for .cool-branch directory
@@ -63,7 +63,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 	};
 
 	const args = [...argv];
-	const validCommands = ['list', 'add', 'rm', 'dirname', 'config'];
+	const validCommands = ['list', 'add', 'rm', 'dirname', 'config', 'init'];
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i] as string;
@@ -146,6 +146,7 @@ Usage:
                                Add a new worktree
   cool-branch rm [options] [<branch-name>]
                                Remove a worktree
+  cool-branch init [options]   Initialize .cool-branch directory
   cool-branch dirname [<folder-name>]
                                Get or set dirname (deprecated, use config)
   cool-branch config           List all config values
@@ -184,5 +185,5 @@ export function showVersion(): void {
  * Check if a command is valid
  */
 export function isValidCommand(cmd: string): boolean {
-	return ['list', 'add', 'rm', 'dirname', 'config'].includes(cmd);
+	return ['list', 'add', 'rm', 'dirname', 'config', 'init'].includes(cmd);
 }

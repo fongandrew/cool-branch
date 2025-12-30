@@ -1110,5 +1110,74 @@ test('dirname: shows deprecation warning', ({ dir, base }) => {
 	);
 });
 
+// ============================================================================
+// Init Command Tests
+// ============================================================================
+
+test('init: creates .cool-branch directory and config.json', ({ dir, base }) => {
+	initGitRepo(dir);
+	assert(!fs.existsSync(path.join(dir, '.cool-branch')));
+	const result = runCLI(['init', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assertFileExists(path.join(dir, '.cool-branch', 'config.json'));
+	// Should be valid JSON
+	const config = JSON.parse(
+		fs.readFileSync(path.join(dir, '.cool-branch', 'config.json'), 'utf-8'),
+	);
+	assert(typeof config === 'object');
+});
+
+test('init: --local creates config.local.json', ({ dir, base }) => {
+	initGitRepo(dir);
+	const result = runCLI(['init', '--local', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assertFileExists(path.join(dir, '.cool-branch', 'config.local.json'));
+	assert(!fs.existsSync(path.join(dir, '.cool-branch', 'config.json')));
+});
+
+test('init: does not overwrite existing config', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'), { recursive: true });
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.json'),
+		JSON.stringify({ dirname: 'existing' }),
+	);
+	const result = runCLI(['init', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	const config = JSON.parse(
+		fs.readFileSync(path.join(dir, '.cool-branch', 'config.json'), 'utf-8'),
+	);
+	assert.strictEqual(config.dirname, 'existing', 'Should not overwrite existing config');
+});
+
+test('init: --force overwrites existing config', ({ dir, base }) => {
+	initGitRepo(dir);
+	fs.mkdirSync(path.join(dir, '.cool-branch'), { recursive: true });
+	fs.writeFileSync(
+		path.join(dir, '.cool-branch', 'config.json'),
+		JSON.stringify({ dirname: 'existing' }),
+	);
+	const result = runCLI(['init', '--force', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	const config = JSON.parse(
+		fs.readFileSync(path.join(dir, '.cool-branch', 'config.json'), 'utf-8'),
+	);
+	assert.notStrictEqual(config.dirname, 'existing', 'Should overwrite with --force');
+});
+
+test('init: errors when not in git repo', ({ dir, base }) => {
+	// dir is not a git repo
+	const result = runCLI(['init', '--base', base], { cwd: dir });
+	assertExitCode(result, 1);
+	assert(result.stderr.includes('git') || result.stderr.includes('repository'));
+});
+
+test('init: prints path to created file', ({ dir, base }) => {
+	initGitRepo(dir);
+	const result = runCLI(['init', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assert(result.stdout.includes('.cool-branch') && result.stdout.includes('config.json'));
+});
+
 // Run all tests
 runTests();
