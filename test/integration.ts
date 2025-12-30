@@ -381,7 +381,7 @@ test('add: respects --no-setup flag', ({ dir, base }) => {
 	fs.writeFileSync(
 		path.join(dir, '.cool-branch', 'setup'),
 		`#!/bin/bash
-echo "setup ran" > "$1/setup-marker.txt"
+echo "setup ran" > "./setup-marker.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -396,7 +396,7 @@ test('add: uses custom script with --setup', ({ dir, base }) => {
 	fs.writeFileSync(
 		path.join(dir, 'custom-setup.sh'),
 		`#!/bin/bash
-echo "custom setup" > "$1/custom-marker.txt"
+echo "custom setup" > "./custom-marker.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -489,7 +489,7 @@ test('add: runs .cool-branch/setup when it exists', ({ dir, base }) => {
 	fs.writeFileSync(
 		path.join(dir, '.cool-branch', 'setup'),
 		`#!/bin/bash
-echo "new setup ran" > "$1/setup-marker.txt"
+echo "new setup ran" > "./setup-marker.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -505,7 +505,7 @@ test('add: runs .cool-branch/setup.sh when it exists', ({ dir, base }) => {
 	fs.writeFileSync(
 		path.join(dir, '.cool-branch', 'setup.sh'),
 		`#!/bin/bash
-echo "new setup ran" > "$1/setup-marker.txt"
+echo "new setup ran" > "./setup-marker.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -620,7 +620,7 @@ test('add: runs setup.local instead of setup when both exist', ({ dir, base }) =
 	fs.writeFileSync(
 		path.join(dir, '.cool-branch', 'setup'),
 		`#!/bin/bash
-echo "regular" > "$1/which-setup.txt"
+echo "regular" > "./which-setup.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -628,7 +628,7 @@ echo "regular" > "$1/which-setup.txt"
 	fs.writeFileSync(
 		path.join(dir, '.cool-branch', 'setup.local'),
 		`#!/bin/bash
-echo "local" > "$1/which-setup.txt"
+echo "local" > "./which-setup.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -648,7 +648,7 @@ test('add: runs setup.local.sh with extension', ({ dir, base }) => {
 	fs.writeFileSync(
 		path.join(dir, '.cool-branch', 'setup.local.sh'),
 		`#!/bin/bash
-echo "local ran" > "$1/setup-marker.txt"
+echo "local ran" > "./setup-marker.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -664,7 +664,7 @@ test('add: falls back to regular setup when no local exists', ({ dir, base }) =>
 	fs.writeFileSync(
 		path.join(dir, '.cool-branch', 'setup'),
 		`#!/bin/bash
-echo "regular ran" > "$1/setup-marker.txt"
+echo "regular ran" > "./setup-marker.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -831,7 +831,7 @@ test('add: runs setup from worktree, not main repo', ({ dir, base }) => {
 	fs.writeFileSync(
 		path.join(dir, '.cool-branch', 'setup'),
 		`#!/bin/bash
-echo "main repo" > "$1/which-setup.txt"
+echo "main repo" > "./which-setup.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -841,7 +841,7 @@ echo "main repo" > "$1/which-setup.txt"
 	fs.writeFileSync(
 		path.join(dir, '.cool-branch', 'setup'),
 		`#!/bin/bash
-echo "feature branch" > "$1/which-setup.txt"
+echo "feature branch" > "./which-setup.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -862,7 +862,7 @@ test('add: no setup runs if worktree branch has no setup script', ({ dir, base }
 	fs.writeFileSync(
 		path.join(dir, '.cool-branch', 'setup'),
 		`#!/bin/bash
-echo "setup ran" > "$1/setup-marker.txt"
+echo "setup ran" > "./setup-marker.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -886,7 +886,7 @@ test('add: runs copied local setup from worktree', ({ dir, base }) => {
 	fs.writeFileSync(
 		path.join(dir, '.cool-branch', 'setup.local'),
 		`#!/bin/bash
-echo "local setup ran" > "$1/setup-marker.txt"
+echo "local setup ran" > "./setup-marker.txt"
 `,
 		{ mode: 0o755 },
 	);
@@ -902,7 +902,7 @@ test('add: --setup flag still works with explicit path', ({ dir, base }) => {
 	fs.writeFileSync(
 		path.join(dir, 'custom-setup.sh'),
 		`#!/bin/bash
-echo "custom" > "$1/setup-marker.txt"
+echo "custom" > "./setup-marker.txt"
 `,
 		{ mode: 0o755 },
 	);

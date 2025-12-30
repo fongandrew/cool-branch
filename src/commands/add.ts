@@ -37,14 +37,16 @@ export interface AddOptions {
 
 /**
  * Run a setup script in the worktree directory
- * Streams stdout/stderr to console in real-time
+ * Streams stdout/stderr to console in real-time.
+ * The script runs from inside the worktree directory.
  * @param scriptPath Absolute path to the script
- * @param worktreePath Path to the worktree directory
+ * @param worktreePath Path to the worktree directory (used as cwd)
+ * @param originalDir Path to the original repo directory (passed as $1)
  * @returns true if script succeeded, false otherwise
  */
-function runSetupScript(scriptPath: string, worktreePath: string): boolean {
+function runSetupScript(scriptPath: string, worktreePath: string, originalDir: string): boolean {
 	try {
-		execSync(`"${scriptPath}" "${worktreePath}"`, {
+		execSync(`"${scriptPath}" "${originalDir}"`, {
 			cwd: worktreePath,
 			stdio: 'inherit',
 		});
@@ -329,7 +331,7 @@ export function addCommand(options: AddOptions): void {
 				// For default script, skip silently (already checked above)
 			} else {
 				console.log('Running setup script...');
-				const success = runSetupScript(scriptPath, targetPath);
+				const success = runSetupScript(scriptPath, targetPath, repoRoot);
 				if (success) {
 					console.log('Setup complete.');
 				} else {

@@ -13,17 +13,18 @@ import { getRepoRoot } from '../git';
 const SETUP_TEMPLATE = `#!/bin/bash
 # cool-branch setup script
 # This script runs after creating a new worktree.
-# The worktree path is passed as the first argument: $1
+# It executes from inside the new worktree directory.
+# The original repo directory is passed as the first argument: $1
 
-WORKTREE_PATH="$1"
+ORIGINAL_DIR="$1"
 
 # Example: Install dependencies
-# cd "$WORKTREE_PATH" && npm install
+# npm install
 
 # Example: Copy local environment files
-# cp .env.example "$WORKTREE_PATH/.env"
+# cp "$ORIGINAL_DIR/.env" .env
 
-echo "Setup complete for $WORKTREE_PATH"
+echo "Setup complete for $(pwd)"
 `;
 
 /**
