@@ -1,5 +1,7 @@
 import { defineConfig } from 'tsup';
 
+import pkg from './package.json';
+
 export default defineConfig({
 	entry: ['src/index.ts'],
 	outDir: 'dist',
@@ -7,4 +9,7 @@ export default defineConfig({
 	clean: true,
 	target: 'node18',
 	shims: true,
+	define: {
+		__VERSION__: JSON.stringify(pkg.version),
+	},
 });

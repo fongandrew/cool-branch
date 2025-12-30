@@ -1,8 +1,8 @@
 // CLI argument parsing for cool-branch
 
-import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+
+declare const __VERSION__: string;
 
 /**
  * Available commands
@@ -131,14 +131,10 @@ export function parseArgs(argv: string[]): ParsedArgs {
 }
 
 /**
- * Get version from package.json
+ * Get version (injected at build time)
  */
 export function getVersion(): string {
-	const __dirname = path.dirname(fileURLToPath(import.meta.url));
-	// Handle both src/ during dev and dist/ when built
-	const packageJsonPath = path.resolve(__dirname, '..', 'package.json');
-	const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-	return packageJson.version;
+	return __VERSION__;
 }
 
 /**

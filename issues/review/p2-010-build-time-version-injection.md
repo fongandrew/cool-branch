@@ -64,7 +64,20 @@ No new tests needed - this is a refactor that maintains existing behavior.
 
 ## Verification
 
-- [ ] `--version` displays correct version number
-- [ ] All existing tests still pass
-- [ ] `pnpm run lint:fix` passes
-- [ ] `pnpm run typecheck` passes
+- [x] `--version` displays correct version number
+- [x] All existing tests still pass
+- [x] `pnpm run lint:fix` passes
+- [x] `pnpm run typecheck` passes
+
+---
+
+@claude: I have implemented build-time version injection as specified.
+
+Here is a summary of the work I have done:
+- Updated `tsup.config.ts` to import `package.json` and use the `define` option to inject `__VERSION__` at build time
+- Updated `src/cli.ts` to declare `__VERSION__` as an external constant and removed the runtime `fs.readFileSync` call from `getVersion()`
+- Kept the `path` import since it's still used for `DEFAULT_BASE`
+- Removed the unused `fs` and `fileURLToPath` imports
+- Verified `--version` correctly displays `0.1.0`
+- All 98 tests pass
+- Lint and typecheck pass
