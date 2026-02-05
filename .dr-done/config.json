@@ -1,0 +1,6 @@
+{
+  "gitCommit": true,
+  "maxIterations": 50,
+  "review": true,
+  "stuckReminder": true
+}
