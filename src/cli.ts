@@ -14,6 +14,8 @@ export type Command =
 	| 'add'
 	| 'rm'
 	| 'rename'
+	| 'where'
+	| 'last'
 	| 'dirname'
 	| 'config'
 	| 'init'
@@ -85,6 +87,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
 		'add',
 		'rm',
 		'rename',
+		'where',
+		'last',
 		'dirname',
 		'config',
 		'init',
@@ -239,6 +243,38 @@ Options:
 `);
 			break;
 
+		case 'where':
+			console.log(`cool-branch where - Get worktree path for a branch
+
+Usage:
+  cool-branch where [options] <branch-name>
+
+Outputs the worktree path for the given branch. Useful for shell navigation:
+  cd $(cool-branch where feature-branch)
+
+Options:
+  --base <path>     Base directory for worktrees (default: ~/.worktrees)
+  --config <path>   Path to config file or directory containing config.json
+  -h, --help        Show this help
+`);
+			break;
+
+		case 'last':
+			console.log(`cool-branch last - Get most recent worktree path
+
+Usage:
+  cool-branch last [options]
+
+Outputs the path of the most recently created worktree. Useful for shell navigation:
+  cd $(cool-branch last)
+
+Options:
+  --base <path>     Base directory for worktrees (default: ~/.worktrees)
+  --config <path>   Path to config file or directory containing config.json
+  -h, --help        Show this help
+`);
+			break;
+
 		case 'init':
 			console.log(`cool-branch init - Initialize .cool-branch directory
 
@@ -317,6 +353,8 @@ Commands:
   add               Add a new worktree
   rm                Remove a worktree
   rename            Rename current worktree and branch
+  where             Get worktree path for a branch
+  last              Get most recent worktree path
   init              Initialize .cool-branch directory
   setup             View or manage setup scripts
   config            View or modify configuration
@@ -350,6 +388,8 @@ export function isValidCommand(cmd: string): boolean {
 		'add',
 		'rm',
 		'rename',
+		'where',
+		'last',
 		'dirname',
 		'config',
 		'init',

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `rename` command to rename current worktree and branch with auto-increment support
+- `where` command to get worktree path for a given branch (for shell navigation)
+- `last` command to get the most recently created worktree path (for shell navigation)
 
 ## [0.1.0] - 2025-12-30
 

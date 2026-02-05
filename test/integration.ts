@@ -1397,5 +1397,59 @@ test('rename: errors when target branch already exists', ({ dir, base }) => {
 	);
 });
 
+// ============================================================================
+// Where Command Tests
+// ============================================================================
+
+test('where: outputs worktree path for given branch', ({ dir, base }) => {
+	initGitRepo(dir);
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	const result = runCLI(['where', 'feature-x', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	const expectedPath = path.join(base, repoName, 'feature-x');
+	assert.strictEqual(result.stdout.trim(), expectedPath, 'Should output only the path');
+});
+
+test('where: errors when branch does not exist', ({ dir, base }) => {
+	initGitRepo(dir);
+	const result = runCLI(['where', 'nonexistent', '--base', base], { cwd: dir });
+	assertExitCode(result, 1);
+});
+
+test('where: errors when branch has no worktree', ({ dir, base }) => {
+	initGitRepo(dir);
+	execSync('git branch feature-no-worktree', { cwd: dir });
+	const result = runCLI(['where', 'feature-no-worktree', '--base', base], { cwd: dir });
+	assertExitCode(result, 1);
+});
+
+test('where: errors when no branch name provided', ({ dir, base }) => {
+	initGitRepo(dir);
+	const result = runCLI(['where', '--base', base], { cwd: dir });
+	assertExitCode(result, 1);
+});
+
+// ============================================================================
+// Last Command Tests
+// ============================================================================
+
+test('last: outputs most recently created worktree path', ({ dir, base }) => {
+	initGitRepo(dir);
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-a', '--base', base], { cwd: dir });
+	runCLI(['add', 'feature-b', '--base', base], { cwd: dir });
+	const result = runCLI(['last', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	const expectedPath = path.join(base, repoName, 'feature-b');
+	assert.strictEqual(result.stdout.trim(), expectedPath, 'Should output only the latest path');
+});
+
+test('last: errors when no worktrees exist', ({ dir, base }) => {
+	initGitRepo(dir);
+	const result = runCLI(['last', '--base', base], { cwd: dir });
+	assertExitCode(result, 1);
+});
+
 // Run all tests
 runTests();

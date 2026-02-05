@@ -35,6 +35,8 @@ cool-branch rm               # Select a worktree to remove
 | `add [branch]` | Create a new worktree (interactive if no branch given) |
 | `rm [branch]` | Remove a worktree and delete the branch (interactive if no branch given) |
 | `rename [new-name]` | Rename current worktree and branch (auto-increments if no name given) |
+| `where <branch>` | Get worktree path for a branch (for shell navigation) |
+| `last` | Get most recent worktree path (for shell navigation) |
 | `init` | Initialize `.cool-branch` directory with config template |
 | `setup` | View or manage setup scripts |
 | `config` | View or modify configuration |
@@ -183,6 +185,20 @@ $ cool-branch add feature-x --remote upstream
 
 ```bash
 $ cool-branch add feature-x --config ~/my-shared-config.json
+```
+
+### Navigate to a worktree using `where`
+
+```bash
+$ cd $(cool-branch where feature-x)
+```
+
+### Navigate to the most recent worktree using `last`
+
+```bash
+$ cool-branch add feature-new
+# ... work in main repo ...
+$ cd $(cool-branch last)  # Jump to feature-new
 ```
 
 ## License

@@ -5,10 +5,12 @@ import { addCommand, interactiveAddCommand } from './commands/add';
 import { configCommand } from './commands/config';
 import { dirnameCommand } from './commands/dirname';
 import { initCommand } from './commands/init';
+import { lastCommand } from './commands/last';
 import { listCommand } from './commands/list';
 import { interactiveRemoveCommand, removeCommand } from './commands/remove';
 import { renameCommand } from './commands/rename';
 import { setupCommand } from './commands/setup';
+import { whereCommand } from './commands/where';
 import { loadCustomConfig, readLocalConfig } from './config';
 
 /**
@@ -42,6 +44,8 @@ async function main(): Promise<void> {
 		'add',
 		'rm',
 		'rename',
+		'where',
+		'last',
 		'dirname',
 		'config',
 		'init',
@@ -169,6 +173,24 @@ async function main(): Promise<void> {
 				base: effectiveBase,
 				localDirname,
 				newName: args.positional,
+			});
+			break;
+		case 'where':
+			if (!args.positional) {
+				console.error('Error: Branch name is required');
+				console.error('Run "cool-branch where --help" for usage information.');
+				process.exit(1);
+			}
+			whereCommand({
+				base: effectiveBase,
+				localDirname,
+				branchName: args.positional,
+			});
+			break;
+		case 'last':
+			lastCommand({
+				base: effectiveBase,
+				localDirname,
 			});
 			break;
 		case 'dirname':
