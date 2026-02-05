@@ -1282,5 +1282,120 @@ test('setup: errors when not in git repo', ({ dir, base }) => {
 	assertExitCode(result, 1);
 });
 
+// ============================================================================
+// Rename Command Tests
+// ============================================================================
+
+test('rename: renames current branch and worktree', ({ dir, base }) => {
+	initGitRepo(dir);
+	const repoName = path.basename(dir);
+	// Create a worktree
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	const oldPath = path.join(base, repoName, 'feature-x');
+	const newPath = path.join(base, repoName, 'feature-renamed');
+	assertFileExists(oldPath);
+	// Rename from within the worktree
+	const result = runCLI(['rename', 'feature-renamed', '--base', base], { cwd: oldPath });
+	assertExitCode(result, 0);
+	// Old path should be gone
+	assert(!fs.existsSync(oldPath), 'Old worktree path should not exist');
+	// New path should exist
+	assertFileExists(newPath);
+	// Branch should be renamed
+	const branches = listBranches(dir);
+	assert(branches.includes('feature-renamed'), 'New branch name should exist');
+	assert(!branches.includes('feature-x'), 'Old branch name should not exist');
+});
+
+test('rename: auto-increments when no name provided', ({ dir, base }) => {
+	initGitRepo(dir);
+	const repoName = path.basename(dir);
+	// Create a worktree
+	runCLI(['add', 'new-feature', '--base', base], { cwd: dir });
+	const oldPath = path.join(base, repoName, 'new-feature');
+	const newPath = path.join(base, repoName, 'new-feature-1');
+	// Rename without providing a name
+	const result = runCLI(['rename', '--base', base], { cwd: oldPath });
+	assertExitCode(result, 0);
+	// Old path should be gone
+	assert(!fs.existsSync(oldPath));
+	// New path should exist
+	assertFileExists(newPath);
+	// Branch should be renamed
+	const branches = listBranches(dir);
+	assert(branches.includes('new-feature-1'));
+	assert(!branches.includes('new-feature'));
+});
+
+test('rename: auto-increment handles successive renames', ({ dir, base }) => {
+	initGitRepo(dir);
+	const repoName = path.basename(dir);
+	// Create a worktree
+	runCLI(['add', 'feature', '--base', base], { cwd: dir });
+	let currentPath = path.join(base, repoName, 'feature');
+	// First rename: feature -> feature-1
+	runCLI(['rename', '--base', base], { cwd: currentPath });
+	currentPath = path.join(base, repoName, 'feature-1');
+	assertFileExists(currentPath);
+	// Second rename: feature-1 -> feature-2
+	runCLI(['rename', '--base', base], { cwd: currentPath });
+	currentPath = path.join(base, repoName, 'feature-2');
+	assertFileExists(currentPath);
+	// Branch should be feature-2
+	const branches = listBranches(dir);
+	assert(branches.includes('feature-2'));
+	assert(!branches.includes('feature-1'));
+	assert(!branches.includes('feature'));
+});
+
+test('rename: auto-increment skips existing branches', ({ dir, base }) => {
+	initGitRepo(dir);
+	const repoName = path.basename(dir);
+	// Create feature-1 branch first (without worktree)
+	execSync('git branch feature-1', { cwd: dir });
+	// Create a worktree with feature
+	runCLI(['add', 'feature', '--base', base], { cwd: dir });
+	const oldPath = path.join(base, repoName, 'feature');
+	// Rename without name should skip to feature-2 (since feature-1 exists)
+	runCLI(['rename', '--base', base], { cwd: oldPath });
+	const newPath = path.join(base, repoName, 'feature-2');
+	assertFileExists(newPath);
+	const branches = listBranches(dir);
+	assert(branches.includes('feature-2'));
+	assert(branches.includes('feature-1'), 'feature-1 should still exist');
+});
+
+test('rename: errors when not in a git repo', ({ dir, base }) => {
+	const result = runCLI(['rename', 'new-name', '--base', base], { cwd: dir });
+	assertExitCode(result, 1);
+});
+
+test('rename: errors when not in a worktree', ({ dir, base }) => {
+	initGitRepo(dir);
+	// Try to rename from main repo (not a separate worktree)
+	const result = runCLI(['rename', 'new-name', '--base', base], { cwd: dir });
+	assertExitCode(result, 1);
+	assert(
+		result.stderr.includes('worktree') || result.stderr.includes('main'),
+		'Should indicate error about being in main repo',
+	);
+});
+
+test('rename: errors when target branch already exists', ({ dir, base }) => {
+	initGitRepo(dir);
+	const repoName = path.basename(dir);
+	// Create two worktrees
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	runCLI(['add', 'feature-y', '--base', base], { cwd: dir });
+	const xPath = path.join(base, repoName, 'feature-x');
+	// Try to rename feature-x to feature-y (which already exists)
+	const result = runCLI(['rename', 'feature-y', '--base', base], { cwd: xPath });
+	assertExitCode(result, 1);
+	assert(
+		result.stderr.includes('exists') || result.stderr.includes('already'),
+		'Should indicate branch already exists',
+	);
+});
+
 // Run all tests
 runTests();

@@ -7,6 +7,7 @@ import { dirnameCommand } from './commands/dirname';
 import { initCommand } from './commands/init';
 import { listCommand } from './commands/list';
 import { interactiveRemoveCommand, removeCommand } from './commands/remove';
+import { renameCommand } from './commands/rename';
 import { setupCommand } from './commands/setup';
 import { loadCustomConfig, readLocalConfig } from './config';
 
@@ -35,7 +36,17 @@ async function main(): Promise<void> {
 
 	// Check for unknown commands (first positional arg that's not a known command)
 	const rawArgs = process.argv.slice(2);
-	const validCommands = ['version', 'list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'];
+	const validCommands = [
+		'version',
+		'list',
+		'add',
+		'rm',
+		'rename',
+		'dirname',
+		'config',
+		'init',
+		'setup',
+	];
 	const flags = [
 		'-h',
 		'--help',
@@ -152,6 +163,13 @@ async function main(): Promise<void> {
 					force: args.force,
 				});
 			}
+			break;
+		case 'rename':
+			renameCommand({
+				base: effectiveBase,
+				localDirname,
+				newName: args.positional,
+			});
 			break;
 		case 'dirname':
 			// Show deprecation warning

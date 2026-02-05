@@ -70,6 +70,18 @@ export function getRepoRoot(cwd?: string): string | null {
 }
 
 /**
+ * Get the path to the main worktree (not a linked worktree)
+ * @param cwd Working directory (optional)
+ * @returns The main worktree path, or null if not in a git repo
+ */
+export function getMainWorktreePath(cwd?: string): string | null {
+	// List all worktrees and find the main one
+	const worktrees = listWorktrees(cwd);
+	const mainWorktree = worktrees.find((w) => w.isMain);
+	return mainWorktree ? mainWorktree.path : null;
+}
+
+/**
  * Get the URL of the origin remote
  * @param cwd Working directory (optional)
  * @returns The origin URL, or null if no origin configured
@@ -262,4 +274,65 @@ export function deleteBranch(branchName: string, cwd?: string): void {
 	if (result.exitCode !== 0) {
 		throw new Error(`Failed to delete branch: ${result.stderr || result.stdout}`);
 	}
+}
+
+/**
+ * Rename a local branch
+ * @param oldName Current branch name
+ * @param newName New branch name
+ * @param cwd Working directory (optional)
+ * @throws Error if the operation fails
+ */
+export function renameBranch(oldName: string, newName: string, cwd?: string): void {
+	const result = runGit(['branch', '-m', oldName, newName], cwd);
+	if (result.exitCode !== 0) {
+		throw new Error(`Failed to rename branch: ${result.stderr || result.stdout}`);
+	}
+}
+
+/**
+ * Move a worktree to a new location
+ * @param oldPath Current worktree path
+ * @param newPath New worktree path
+ * @param cwd Working directory (optional)
+ * @throws Error if the operation fails
+ */
+export function moveWorktree(oldPath: string, newPath: string, cwd?: string): void {
+	const result = runGit(['worktree', 'move', oldPath, newPath], cwd);
+	if (result.exitCode !== 0) {
+		throw new Error(`Failed to move worktree: ${result.stderr || result.stdout}`);
+	}
+}
+
+/**
+ * Generate an auto-incremented branch name
+ * @param baseName Current branch name (e.g., "feature" or "feature-1")
+ * @param existingBranches List of existing branch names
+ * @returns New incremented name (e.g., "feature-1" or "feature-2")
+ */
+export function generateIncrementedName(baseName: string, existingBranches: string[]): string {
+	// Check if the name already ends with a number (e.g., "feature-1")
+	const match = baseName.match(/^(.+)-(\d+)$/);
+
+	let base: string;
+	let startNum: number;
+
+	if (match) {
+		// Already has a number suffix
+		base = match[1] as string;
+		startNum = parseInt(match[2] as string, 10) + 1;
+	} else {
+		// No number suffix yet
+		base = baseName;
+		startNum = 1;
+	}
+
+	// Find the next available number
+	let newName = `${base}-${startNum}`;
+	while (existingBranches.includes(newName)) {
+		startNum++;
+		newName = `${base}-${startNum}`;
+	}
+
+	return newName;
 }

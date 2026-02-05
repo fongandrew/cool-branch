@@ -13,6 +13,7 @@ export type Command =
 	| 'list'
 	| 'add'
 	| 'rm'
+	| 'rename'
 	| 'dirname'
 	| 'config'
 	| 'init'
@@ -78,7 +79,17 @@ export function parseArgs(argv: string[]): ParsedArgs {
 	};
 
 	const args = [...argv];
-	const validCommands = ['version', 'list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'];
+	const validCommands = [
+		'version',
+		'list',
+		'add',
+		'rm',
+		'rename',
+		'dirname',
+		'config',
+		'init',
+		'setup',
+	];
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i] as string;
@@ -212,6 +223,22 @@ Options:
 `);
 			break;
 
+		case 'rename':
+			console.log(`cool-branch rename - Rename current worktree and branch
+
+Usage:
+  cool-branch rename [options] [<new-branch-name>]
+
+If no branch name is provided, auto-increments the current name (e.g., feature → feature-1).
+Useful for backing up dead-end branches multiple times daily.
+
+Options:
+  --base <path>     Base directory for worktrees (default: ~/.worktrees)
+  --config <path>   Path to config file or directory containing config.json
+  -h, --help        Show this help
+`);
+			break;
+
 		case 'init':
 			console.log(`cool-branch init - Initialize .cool-branch directory
 
@@ -289,6 +316,7 @@ Commands:
   list              List worktrees and branches
   add               Add a new worktree
   rm                Remove a worktree
+  rename            Rename current worktree and branch
   init              Initialize .cool-branch directory
   setup             View or manage setup scripts
   config            View or modify configuration
@@ -316,5 +344,15 @@ export function showVersion(): void {
  * Check if a command is valid
  */
 export function isValidCommand(cmd: string): boolean {
-	return ['version', 'list', 'add', 'rm', 'dirname', 'config', 'init', 'setup'].includes(cmd);
+	return [
+		'version',
+		'list',
+		'add',
+		'rm',
+		'rename',
+		'dirname',
+		'config',
+		'init',
+		'setup',
+	].includes(cmd);
 }
