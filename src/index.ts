@@ -172,7 +172,8 @@ async function main(): Promise<void> {
 			renameCommand({
 				base: effectiveBase,
 				localDirname,
-				newName: args.positional,
+				arg1: args.positional,
+				arg2: args.positional2,
 			});
 			break;
 		case 'where':

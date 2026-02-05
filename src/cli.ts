@@ -228,18 +228,30 @@ Options:
 			break;
 
 		case 'rename':
-			console.log(`cool-branch rename - Rename current worktree and branch
+			console.log(`cool-branch rename - Rename a worktree and branch
 
-Usage:
+Usage (from worktree):
   cool-branch rename [options] [<new-branch-name>]
 
-If no branch name is provided, auto-increments the current name (e.g., feature → feature-1).
+Usage (from main repo):
+  cool-branch rename [options] <branch-name> [<new-branch-name>]
+
+From within a worktree: Renames the current branch and worktree directory.
+From main repository: Renames the specified branch and its worktree.
+
+If no new name is provided, auto-increments the name (e.g., feature → feature-1).
 Useful for backing up dead-end branches multiple times daily.
 
 Options:
   --base <path>     Base directory for worktrees (default: ~/.worktrees)
   --config <path>   Path to config file or directory containing config.json
   -h, --help        Show this help
+
+Examples:
+  cool-branch rename new-name          # From worktree: rename current to "new-name"
+  cool-branch rename                   # From worktree: auto-increment current name
+  cool-branch rename old-x new-x       # From main: rename "old-x" to "new-x"
+  cool-branch rename feature-x         # From main: auto-increment "feature-x"
 `);
 			break;
 

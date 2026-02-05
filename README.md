@@ -34,7 +34,7 @@ cool-branch rm               # Select a worktree to remove
 | `list` | List all branches and their worktree status |
 | `add [branch]` | Create a new worktree (interactive if no branch given) |
 | `rm [branch]` | Remove a worktree and delete the branch (interactive if no branch given) |
-| `rename [new-name]` | Rename current worktree and branch (auto-increments if no name given) |
+| `rename [old] [new]` | Rename a worktree and branch (works from main or worktree) |
 | `where <branch>` | Get worktree path for a branch (for shell navigation) |
 | `last` | Get most recent worktree path (for shell navigation) |
 | `init` | Initialize `.cool-branch` directory with config template |
@@ -199,6 +199,19 @@ $ cd $(cool-branch where feature-x)
 $ cool-branch add feature-new
 # ... work in main repo ...
 $ cd $(cool-branch last)  # Jump to feature-new
+```
+
+### Rename a worktree from main or from within
+
+```bash
+# From within a worktree
+$ cd ~/.worktrees/my-project/feature-x
+$ cool-branch rename feature-y         # Rename to feature-y
+$ cool-branch rename                   # Auto-increment to feature-x-1
+
+# From main repository
+$ cool-branch rename feature-x new-x   # Rename feature-x to new-x
+$ cool-branch rename feature-x         # Auto-increment feature-x
 ```
 
 ## License

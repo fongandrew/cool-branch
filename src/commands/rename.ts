@@ -1,4 +1,4 @@
-// Rename command - renames the current worktree and branch
+// Rename command - renames a worktree and branch
 
 import * as path from 'node:path';
 
@@ -20,11 +20,15 @@ import {
 export interface RenameOptions {
 	base: string;
 	localDirname?: string | undefined;
-	newName?: string | undefined; // Optional new name, auto-increment if not provided
+	arg1?: string | undefined; // Context-dependent: new name (from worktree) or old name (from main)
+	arg2?: string | undefined; // New name when running from main
 }
 
 /**
- * Rename the current worktree and its associated branch
+ * Rename a worktree and its associated branch
+ * Two modes:
+ * - From worktree: arg1 is new name (optional, auto-increment if not provided)
+ * - From main repo: arg1 is old branch name (required), arg2 is new name (optional)
  * @param options Command options
  */
 export function renameCommand(options: RenameOptions): void {
@@ -35,46 +39,73 @@ export function renameCommand(options: RenameOptions): void {
 		process.exit(1);
 	}
 
-	// Get the current branch
-	const currentBranch = getCurrentBranch();
-	if (currentBranch === null) {
-		console.error('Error: Not currently on a branch');
-		process.exit(1);
-	}
-
-	// Get all worktrees to find the current one
+	// Detect if we're in main or a worktree
 	const worktrees = listWorktrees();
 	const cwd = process.cwd();
-
-	// Find the current worktree
 	const currentWorktree = worktrees.find((w) => w.path === cwd);
+	const isInMain = !currentWorktree || currentWorktree.isMain;
 
-	// Check if we're in the main repository (not a separate worktree)
-	if (!currentWorktree || currentWorktree.isMain) {
-		console.error('Error: Cannot rename the main repository worktree');
-		console.error(
-			'This command only works from within a separate worktree created with "cool-branch add"',
-		);
-		process.exit(1);
+	let targetBranchName: string;
+	let targetWorktreePath: string;
+	let newBranchName: string | undefined;
+
+	if (isInMain) {
+		// Mode 1: Running from main repo
+		// arg1 = old branch name (required), arg2 = new name (optional)
+		if (!options.arg1) {
+			console.error('Error: Branch name is required when running from main repository');
+			console.error('Usage: cool-branch rename <branch-name> [new-name]');
+			process.exit(1);
+		}
+
+		targetBranchName = options.arg1;
+		newBranchName = options.arg2;
+
+		// Find the worktree for this branch
+		const targetWorktree = worktrees.find((w) => w.branch === targetBranchName);
+
+		if (!targetWorktree) {
+			console.error(`Error: Branch '${targetBranchName}' does not exist or has no worktree`);
+			process.exit(1);
+		}
+
+		if (targetWorktree.isMain) {
+			console.error('Error: Cannot rename the main repository worktree');
+			process.exit(1);
+		}
+
+		targetWorktreePath = targetWorktree.path;
+	} else {
+		// Mode 2: Running from within a worktree
+		// arg1 = new name (optional, auto-increment if not provided)
+		const currentBranch = getCurrentBranch();
+		if (currentBranch === null) {
+			console.error('Error: Not currently on a branch');
+			process.exit(1);
+		}
+
+		targetBranchName = currentBranch;
+		newBranchName = options.arg1; // First arg is the new name
+		targetWorktreePath = currentWorktree.path;
 	}
 
 	// Prepare config options for path functions
 	const configOpts = options.localDirname ? { localDirname: options.localDirname } : undefined;
 
-	// Determine the new branch name
-	let newBranchName: string;
-	if (options.newName) {
-		newBranchName = options.newName;
+	// Determine the final new branch name
+	let finalNewBranchName: string;
+	if (newBranchName) {
+		finalNewBranchName = newBranchName;
 	} else {
-		// Auto-increment the current branch name
+		// Auto-increment the target branch name
 		const existingBranches = listBranches();
-		newBranchName = generateIncrementedName(currentBranch, existingBranches);
+		finalNewBranchName = generateIncrementedName(targetBranchName, existingBranches);
 	}
 
 	// Check if the target branch already exists
 	const existingBranches = listBranches();
-	if (existingBranches.includes(newBranchName)) {
-		console.error(`Error: Branch '${newBranchName}' already exists`);
+	if (existingBranches.includes(finalNewBranchName)) {
+		console.error(`Error: Branch '${finalNewBranchName}' already exists`);
 		process.exit(1);
 	}
 
@@ -88,22 +119,22 @@ export function renameCommand(options: RenameOptions): void {
 	const worktreeBase = getWorktreeBasePath(options.base, mainWorktreePath, configOpts);
 
 	// Calculate the new worktree path
-	const oldPath = currentWorktree.path;
+	const oldPath = targetWorktreePath;
 	const parentPath = path.dirname(oldPath);
 
 	// Ensure we're renaming within the managed worktree base
 	if (!oldPath.startsWith(worktreeBase)) {
-		console.error('Error: Current worktree is not in the managed worktree directory');
-		console.error(`Current worktree path: ${oldPath}`);
+		console.error('Error: Worktree is not in the managed worktree directory');
+		console.error(`Worktree path: ${oldPath}`);
 		console.error(`Expected worktrees to be under: ${worktreeBase}`);
 		process.exit(1);
 	}
 
-	const newPath = path.join(parentPath, newBranchName);
+	const newPath = path.join(parentPath, finalNewBranchName);
 
 	// Rename the branch first
 	try {
-		renameBranch(currentBranch, newBranchName);
+		renameBranch(targetBranchName, finalNewBranchName);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		console.error(`Error: Failed to rename branch: ${message}`);
@@ -119,7 +150,7 @@ export function renameCommand(options: RenameOptions): void {
 		console.error(`Error: Failed to move worktree: ${message}`);
 		// Try to revert the branch rename
 		try {
-			renameBranch(newBranchName, currentBranch);
+			renameBranch(finalNewBranchName, targetBranchName);
 			console.error('Branch rename has been reverted.');
 		} catch (_revertError) {
 			console.error(
@@ -129,9 +160,13 @@ export function renameCommand(options: RenameOptions): void {
 		process.exit(1);
 	}
 
-	console.log(`Renamed '${currentBranch}' → '${newBranchName}'`);
+	console.log(`Renamed '${targetBranchName}' → '${finalNewBranchName}'`);
 	console.log(`Worktree moved to: ${newPath}`);
-	console.log('');
-	console.log('Note: You are still in the old directory. To continue working:');
-	console.log(`  cd ${newPath}`);
+
+	// Only show the "cd" note if we're in the worktree (not from main)
+	if (!isInMain) {
+		console.log('');
+		console.log('Note: You are still in the old directory. To continue working:');
+		console.log(`  cd ${newPath}`);
+	}
 }
