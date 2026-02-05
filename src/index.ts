@@ -44,6 +44,7 @@ async function main(): Promise<void> {
 		'add',
 		'rm',
 		'rename',
+		'mv',
 		'where',
 		'last',
 		'dirname',
@@ -169,6 +170,7 @@ async function main(): Promise<void> {
 			}
 			break;
 		case 'rename':
+		case 'mv':
 			renameCommand({
 				base: effectiveBase,
 				localDirname,

@@ -1462,6 +1462,36 @@ test('rename: errors from main when branch has no worktree', ({ dir, base }) => 
 });
 
 // ============================================================================
+// mv Alias Tests (alias for rename)
+// ============================================================================
+
+test('mv: works as alias for rename from worktree', ({ dir, base }) => {
+	initGitRepo(dir);
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	const oldPath = path.join(base, repoName, 'feature-x');
+	const newPath = path.join(base, repoName, 'feature-y');
+	const result = runCLI(['mv', 'feature-y', '--base', base], { cwd: oldPath });
+	assertExitCode(result, 0);
+	assert(!fs.existsSync(oldPath));
+	assertFileExists(newPath);
+	const branches = listBranches(dir);
+	assert(branches.includes('feature-y'));
+});
+
+test('mv: works as alias for rename from main', ({ dir, base }) => {
+	initGitRepo(dir);
+	const repoName = path.basename(dir);
+	runCLI(['add', 'feature-x', '--base', base], { cwd: dir });
+	const oldPath = path.join(base, repoName, 'feature-x');
+	const newPath = path.join(base, repoName, 'feature-y');
+	const result = runCLI(['mv', 'feature-x', 'feature-y', '--base', base], { cwd: dir });
+	assertExitCode(result, 0);
+	assert(!fs.existsSync(oldPath));
+	assertFileExists(newPath);
+});
+
+// ============================================================================
 // Where Command Tests
 // ============================================================================
 

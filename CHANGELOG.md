@@ -8,9 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `rename` command to rename worktrees and branches with auto-increment support
+- `rename` command (alias: `mv`) to rename worktrees and branches with auto-increment support
   - Works from within a worktree: `cool-branch rename [new-name]`
   - Works from main repository: `cool-branch rename <branch-name> [new-name]`
+  - `mv` command as a convenient Unix-style alias for `rename`
 - `where` command to get worktree path for a given branch (for shell navigation)
 - `last` command to get the most recently created worktree path (for shell navigation)
 

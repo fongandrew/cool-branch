@@ -14,6 +14,7 @@ export type Command =
 	| 'add'
 	| 'rm'
 	| 'rename'
+	| 'mv'
 	| 'where'
 	| 'last'
 	| 'dirname'
@@ -87,6 +88,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 		'add',
 		'rm',
 		'rename',
+		'mv',
 		'where',
 		'last',
 		'dirname',
@@ -228,13 +230,14 @@ Options:
 			break;
 
 		case 'rename':
-			console.log(`cool-branch rename - Rename a worktree and branch
+		case 'mv':
+			console.log(`cool-branch ${command} - Rename a worktree and branch
 
 Usage (from worktree):
-  cool-branch rename [options] [<new-branch-name>]
+  cool-branch ${command} [options] [<new-branch-name>]
 
 Usage (from main repo):
-  cool-branch rename [options] <branch-name> [<new-branch-name>]
+  cool-branch ${command} [options] <branch-name> [<new-branch-name>]
 
 From within a worktree: Renames the current branch and worktree directory.
 From main repository: Renames the specified branch and its worktree.
@@ -248,10 +251,12 @@ Options:
   -h, --help        Show this help
 
 Examples:
-  cool-branch rename new-name          # From worktree: rename current to "new-name"
-  cool-branch rename                   # From worktree: auto-increment current name
-  cool-branch rename old-x new-x       # From main: rename "old-x" to "new-x"
-  cool-branch rename feature-x         # From main: auto-increment "feature-x"
+  cool-branch ${command} new-name          # From worktree: rename current to "new-name"
+  cool-branch ${command}                   # From worktree: auto-increment current name
+  cool-branch ${command} old-x new-x       # From main: rename "old-x" to "new-x"
+  cool-branch ${command} feature-x         # From main: auto-increment "feature-x"
+
+Note: 'mv' is an alias for 'rename'
 `);
 			break;
 
@@ -364,7 +369,7 @@ Commands:
   list              List worktrees and branches
   add               Add a new worktree
   rm                Remove a worktree
-  rename            Rename current worktree and branch
+  rename (mv)       Rename a worktree and branch
   where             Get worktree path for a branch
   last              Get most recent worktree path
   init              Initialize .cool-branch directory
@@ -400,6 +405,7 @@ export function isValidCommand(cmd: string): boolean {
 		'add',
 		'rm',
 		'rename',
+		'mv',
 		'where',
 		'last',
 		'dirname',
