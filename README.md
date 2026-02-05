@@ -34,6 +34,7 @@ cool-branch rm               # Select a worktree to remove
 | `list` | List all branches and their worktree status |
 | `add [branch]` | Create a new worktree (interactive if no branch given) |
 | `rm [branch]` | Remove a worktree and delete the branch (interactive if no branch given) |
+| `rename [new-name]` | Rename current worktree and branch (auto-increments if no name given) |
 | `init` | Initialize `.cool-branch` directory with config template |
 | `setup` | View or manage setup scripts |
 | `config` | View or modify configuration |
