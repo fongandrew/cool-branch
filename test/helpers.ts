@@ -4,6 +4,7 @@ import { execSync, spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Create a unique temp directory for testing
@@ -70,7 +71,8 @@ export function runCLI(
 	args: string[],
 	options?: { cwd?: string; env?: NodeJS.ProcessEnv },
 ): CLIResult {
-	const cliPath = path.resolve(import.meta.dirname, '..', 'dist', 'index.js');
+	const testDir = path.dirname(fileURLToPath(import.meta.url));
+	const cliPath = path.resolve(testDir, '..', 'dist', 'index.js');
 
 	const result = spawnSync('node', [cliPath, ...args], {
 		cwd: options?.cwd,
