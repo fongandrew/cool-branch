@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `mv` command as a convenient Unix-style alias for `rename`
 - `where` command to get worktree path for a given branch (for shell navigation)
 - `last` command to get the most recently created worktree path (for shell navigation)
+- GitHub Actions CI workflow with matrix testing on Node.js 18, 20, and 22
 
 ## [0.1.0] - 2025-12-30
 
