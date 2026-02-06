@@ -40,7 +40,7 @@ export function initGitRepo(dir: string, options?: { bare?: boolean }): void {
 	if (options?.bare) {
 		execSync('git init --bare', gitOpts);
 	} else {
-		execSync('git init', gitOpts);
+		execSync('git init --initial-branch=main', gitOpts);
 		// Configure user for commits
 		execSync('git config user.name "Test User"', gitOpts);
 		execSync('git config user.email "test@example.com"', gitOpts);
