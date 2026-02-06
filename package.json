@@ -1,6 +1,6 @@
 {
   "name": "cool-branch",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A cross-platform CLI tool for managing git worktrees",
   "type": "module",
   "bin": {
